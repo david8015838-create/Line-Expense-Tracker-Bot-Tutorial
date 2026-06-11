@@ -482,6 +482,19 @@ a.inline-link {
   color: var(--muted);
 }
 
+.flow-tag {
+  display: inline-block;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  background: var(--surface-hi);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
 .flow-arrow {
   text-align: center;
   color: var(--accent);
@@ -795,9 +808,17 @@ code.inline {
   border-radius: 16px;
   background: radial-gradient(circle at 15% 10%, rgba(6, 199, 85, 0.06), transparent 45%), #0b0f19;
   overflow: hidden;
-  margin-bottom: 28px;
+  margin: 0 -64px 28px;
+  width: calc(100% + 128px);
   position: relative;
   touch-action: none;
+}
+
+@media (max-width: 900px) {
+  .workflow-diagram-wrap {
+    margin: 0 -24px 28px;
+    width: calc(100% + 48px);
+  }
 }
 
 .workflow-diagram {

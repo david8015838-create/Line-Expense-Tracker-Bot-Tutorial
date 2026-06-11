@@ -110,7 +110,7 @@
   const zoomLevelEl = zoomControls.querySelector('.diagram-zoom-level');
 
   // ── 拖移 + 縮放（仿 n8n 畫布操作）──
-  const minZoom = 0.3;
+  const minZoom = 0.2;
   const maxZoom = 2;
   let zoom = 1;
   let panX = 0;
@@ -133,8 +133,7 @@
 
   function fitToScreen() {
     const padding = 24;
-    const minScale = 0.42;
-    zoom = Math.max(minScale, Math.min(1, (wrap.clientWidth - padding) / DIAGRAM_VIEWBOX.w));
+    zoom = Math.max(minZoom, Math.min(1, (wrap.clientWidth - padding) / DIAGRAM_VIEWBOX.w));
     panX = padding / 2;
     panY = 16;
     // 維持原本「依寬度自動縮放」的外框高度，放大/縮小時只在這個框內平移，不改變外框大小

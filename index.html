@@ -137,6 +137,7 @@
             <div>
               <div class="name">Bot 馬上回「收到了」</div>
               <div class="desc">先跟 LINE 說一聲「我收到了」，避免 LINE 一直重複傳送，後面慢慢處理就好</div>
+              <div class="flow-tag">n8n 節點：Webhook</div>
             </div>
           </div>
           <div class="flow-arrow">↓</div>
@@ -145,6 +146,7 @@
             <div>
               <div class="name">看你傳的是「文字」還是「照片」</div>
               <div class="desc">照片 → 走「辨識發票」這條路；文字 → 走「理解你說的話」這條路</div>
+              <div class="flow-tag">n8n 節點：Switch</div>
             </div>
           </div>
           <div class="flow-arrow">↓</div>
@@ -154,6 +156,7 @@
               <div>
                 <div class="name">辨識發票（照片）</div>
                 <div class="desc">把照片交給 AI，請它讀出上面的金額、品項，整理成一筆記帳資料</div>
+                <div class="flow-tag">n8n 節點：取得圖片 → 轉base64 → 組合Gemini請求 → Gemini Vision → 解析Gemini回傳（共 5 個）</div>
               </div>
             </div>
             <div class="flow-node">
@@ -161,6 +164,7 @@
               <div>
                 <div class="name">理解你說的話（文字）</div>
                 <div class="desc">把你打的字交給 AI，判斷你是要「記一筆帳」還是「查詢消費」，整理成固定格式</div>
+                <div class="flow-tag">n8n 節點：加入日期 → AI Agent（+ Gemini Chat Model）→ 清理文字輸出</div>
               </div>
             </div>
           </div>
@@ -170,6 +174,7 @@
             <div>
               <div class="name">判斷你想「記帳」還是「查詢」</div>
               <div class="desc">看 AI 整理出來的結果，決定接下來要往哪一條路走</div>
+              <div class="flow-tag">n8n 節點：If</div>
             </div>
           </div>
           <div class="flow-arrow">↓</div>
@@ -179,6 +184,7 @@
               <div>
                 <div class="name">記一筆帳</div>
                 <div class="desc">把這筆消費寫進 Google 試算表，再回 LINE 跟你說「記好了」</div>
+                <div class="flow-tag">n8n 節點：處理記帳 → 寫入Sheet → 送出LINE</div>
               </div>
             </div>
             <div class="flow-node">
@@ -186,6 +192,7 @@
               <div>
                 <div class="name">查詢消費紀錄</div>
                 <div class="desc">去 Google 試算表把資料抓出來，統計總共花多少、各類別比例，再回 LINE 給你看報告</div>
+                <div class="flow-tag">n8n 節點：讀取Sheet → 處理查詢 → 送出LINE1</div>
               </div>
             </div>
           </div>
