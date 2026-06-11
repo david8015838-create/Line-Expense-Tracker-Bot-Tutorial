@@ -1,1 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 48 48"><defs><path id="a" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4"/></defs><clipPath id="b"><use xlink:href="#a" overflow="visible"/></clipPath><path fill="#FBBC05" d="M0 37V11l17 13z" clip-path="url(#b)"/><path fill="#EA4335" d="m0 11 17 13 7-6.1L48 14V0H0z" clip-path="url(#b)"/><path fill="#34A853" d="m0 37 30-23 7.9 1L48 0v48H0z" clip-path="url(#b)"/><path fill="#4285F4" d="M48 48 17 24l-4-3 35-10z" clip-path="url(#b)"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none">
+  <defs>
+    <linearGradient id="gemini-gradient" x1="0" y1="16" x2="16" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1BA1E3"/>
+      <stop offset="30%" stop-color="#5489D6"/>
+      <stop offset="55%" stop-color="#9B72CB"/>
+      <stop offset="80%" stop-color="#D96570"/>
+      <stop offset="100%" stop-color="#F49C46"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#gemini-gradient)" fill-rule="evenodd" clip-rule="evenodd" d="M16 8.016A8.522 8.522 0 008.016 16h-.032A8.522 8.522 0 000 8.016v-.032A8.522 8.522 0 007.984 0h.032A8.522 8.522 0 0016 7.984v.032z"/>
+</svg>
