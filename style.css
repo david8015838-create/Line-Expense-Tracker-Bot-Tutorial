@@ -935,9 +935,43 @@ code.inline {
   gap: 8px;
 }
 
-.diagram-node .dn-icon {
-  font-size: 18px;
+.dn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 4px;
+  border-radius: 6px;
+  background: #fff;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
+.dn-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.diagram-node .dn-icon {
+  width: 26px;
+  height: 26px;
+}
+
+.node-panel-title .dn-icon {
+  width: 30px;
+  height: 30px;
+  margin-right: 4px;
+}
+
+.node-nav-btn .dn-icon {
+  width: 18px;
+  height: 18px;
+  padding: 3px;
+  margin-right: 2px;
 }
 
 .diagram-node .dn-label {

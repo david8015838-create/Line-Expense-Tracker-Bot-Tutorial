@@ -76,7 +76,7 @@
     el.setAttribute('role', 'button');
     el.innerHTML = `
       <div class="dn-top">
-        <span class="dn-icon">${node.icon}</span>
+        <span class="dn-icon"><img src="${node.icon}" alt="" loading="lazy"></span>
         <span class="dn-label">${node.label}</span>
       </div>
       <div class="dn-sub">${node.sub}</div>
@@ -311,7 +311,7 @@
       const label = branch ? `${baseLabel}（${branch}）` : baseLabel;
       const btn = document.createElement('button');
       btn.className = `node-nav-btn ${dir}`;
-      btn.innerHTML = `<span class="nn-label">${label}</span><span class="nn-name">${target.icon} ${target.label}</span>`;
+      btn.innerHTML = `<span class="nn-label">${label}</span><span class="nn-name"><span class="dn-icon"><img src="${target.icon}" alt="" loading="lazy"></span> ${target.label}</span>`;
       btn.onclick = () => openPanel(target.id);
       container.appendChild(btn);
     });
@@ -325,7 +325,7 @@
       c.hidden = c.dataset.node !== id;
     });
 
-    panelTitle.textContent = `${node.icon} ${node.label}`;
+    panelTitle.innerHTML = `<span class="dn-icon"><img src="${node.icon}" alt="" loading="lazy"></span> ${node.label}`;
     panelType.textContent = node.type;
 
     const { prev, next } = findAdjacent(id);
