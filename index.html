@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LINE 記帳 Bot 建置全攻略 — n8n × Gemini × Google Sheets</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="layout">
+
+  <!-- ════════════ Sidebar ════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="dot"></span>
+      <strong>LINE 記帳 Bot 教學</strong>
+    </div>
+    <nav>
+      <a class="view-link active" data-view="view-start">🏠 開始</a>
+      <a class="view-link" data-view="view-prereq">🧰 Phase 0 — 前置作業</a>
+      <a class="view-link" data-view="view-diagram">🗺️ 互動架構圖</a>
+      <a class="view-link" data-view="view-finish">✅ 測試 &amp; 完成</a>
+    </nav>
+  </aside>
+
+  <!-- ════════════ Main ════════════ -->
+  <main class="main">
+
+    <!-- ══════════════════════════════════════════════════
+         VIEW 1：開始
+         ══════════════════════════════════════════════════ -->
+    <section class="view active" id="view-start">
+
+      <div class="hero">
+        <div class="eyebrow">n8n × LINE × Gemini × Google Sheets</div>
+        <h1>LINE <span>記帳 Bot</span><br />建置全攻略</h1>
+        <p class="lead">
+          從零開始，用 n8n 串接 LINE、Gemini AI 與 Google Sheets，打造一個能辨識文字訊息、照片發票，
+          並支援自然語言查詢消費紀錄的智能記帳 Bot。本篇文件記錄每個節點的設定、為什麼這樣設計，以及實際操作畫面。
+        </p>
+        <div class="badges">
+          <span class="badge">自架 n8n（免費）</span>
+          <span class="badge">Gemini 2.5 Flash（免費）</span>
+          <span class="badge">Google Sheets OAuth</span>
+          <span class="badge">LINE Messaging API</span>
+        </div>
+      </div>
+
+      <div class="callout tip vault-reminder">
+        <div class="callout-title">📝 教學裡的「📋」按鈕是做什麼的？</div>
+        <p>
+          螢幕<strong>左下角</strong>有一顆固定不動的「📝 我的資料」按鈕，不管在哪一頁都看得到。
+          點開它，是一個只存在「這台電腦瀏覽器」裡的小保險箱，可以填入你自己的 4 樣東西：
+          <strong>LINE 金鑰、記帳試算表 ID、n8n 網址、Gemini 金鑰</strong>。
+        </p>
+        <p>
+          填好之後，教學裡只要看到 <span class="vault-demo-btn">📋</span> 這個按鈕，
+          按一下就會自動把「你自己的」那筆資料複製到剪貼簿，直接貼到 n8n 的欄位裡就好——
+          不用再到處找、複製貼上，也不會手滑貼錯。
+        </p>
+        <p>
+          <strong>現在還不用急著填！</strong>這 4 樣東西要在下一步「Phase 0 前置作業」才會一個一個拿到。
+          建議邊做 Phase 0、每拿到一樣，就回來點開「我的資料」填一格，後面整篇教學就會自動幫你代入。
+        </p>
+        <p>
+          <strong>放心：這些資料只會存在你自己這台電腦的瀏覽器裡，不會上傳到任何地方，也不會被我們或任何人看到。</strong>
+        </p>
+        <button class="vault-reminder-btn">📝 先打開「我的資料」看看長怎樣</button>
+      </div>
+
+      <section id="intro">
+        <h2><span class="num">00</span>什麼是 n8n？</h2>
+        <p class="section-sub">先花兩分鐘搞懂這個工具，後面所有節點設定才會有概念。</p>
+
+        <p>
+          <strong>n8n</strong> 是一套開源的「工作流自動化」工具。你可以把它想像成
+          <strong>樂高積木</strong>：每一塊積木（稱為「<strong>節點 Node</strong>」）負責一件小事，
+          例如「接收一個 LINE 訊息」「呼叫 AI 幫忙分析」「在 Google Sheets 新增一列」「傳訊息回 LINE」。
+          把這些積木用線連起來，資料就會像水流一樣，從第一個節點依序流到最後一個節點，全程不用自己寫後端伺服器。
+        </p>
+
+        <div class="cards">
+          <div class="card">
+            <div class="card-icon">🧩</div>
+            <div class="card-title">視覺化節點</div>
+            <div class="card-desc">每個節點是一個方框，代表一個動作。點兩下打開就能設定參數，不用寫程式（需要彈性時也可以加 Code 節點寫 JavaScript）。</div>
+          </div>
+          <div class="card">
+            <div class="card-icon">🔌</div>
+            <div class="card-title">串接各種服務</div>
+            <div class="card-desc">內建上百種服務的整合（Google Sheets、Gmail、Slack、LINE、OpenAI、Gemini...），不用自己研究每家的 API 文件。</div>
+          </div>
+          <div class="card">
+            <div class="card-icon">💻</div>
+            <div class="card-title">自架 = 免費</div>
+            <div class="card-desc">n8n 可以自己架在自己的主機上（Docker 一行指令就能跑），完全免費、資料自己掌控；也有付費雲端版，但本教學用自架版即可。</div>
+          </div>
+          <div class="card">
+            <div class="card-icon">🔄</div>
+            <div class="card-title">資料怎麼流動</div>
+            <div class="card-desc">每個節點接收上一個節點的輸出（JSON 格式），處理後再輸出給下一個節點，整條 workflow 像是一條輸送帶。</div>
+          </div>
+        </div>
+
+        <h3>這個 Bot 用 n8n 做什麼？</h3>
+        <p class="muted">
+          簡單說，整個記帳 Bot 就是一條 n8n workflow：用戶在 LINE 傳「午餐120」或拍一張發票照片 →
+          n8n 收到後讓 Gemini AI 判斷這是「記帳」還是「查詢消費」 → 記帳就寫進 Google Sheets，
+          查詢就讀取 Sheets 算出統計結果 → 最後把結果用 LINE 傳回給用戶。
+        </p>
+
+        <div class="callout why">
+          <div class="callout-title">💡 為什麼選 n8n 而不是自己寫程式？</div>
+          <p>
+            自己寫一個 LINE Bot 後端，需要架伺服器、處理 webhook、寫資料庫存取、部署上線，至少要懂一種後端語言。
+            n8n 把這些都包成「節點」，你只要拖拉設定，搭配少量 Code 節點補足彈性，
+            幾個小時就能做出一個完整、可上線的 Bot——這正是教學給同事的最大優勢：門檻低、可視化、好維護。
+          </p>
+        </div>
+      </section>
+
+      <section id="architecture">
+        <h2><span class="num">01</span>系統架構總覽</h2>
+        <p class="section-sub">用白話說明整個流程是怎麼一步步運作的。下一個分頁的「互動架構圖」可以實際點擊每一步看細節教學。</p>
+
+        <div class="flow">
+          <div class="flow-node accent">
+            <span class="icon">💬</span>
+            <div>
+              <div class="name">你在 LINE 傳訊息或照片</div>
+              <div class="desc">文字「午餐120」「本週花多少」，或拍一張發票照片</div>
+            </div>
+          </div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node">
+            <span class="icon">📥</span>
+            <div>
+              <div class="name">Bot 馬上回「收到了」</div>
+              <div class="desc">先跟 LINE 說一聲「我收到了」，避免 LINE 一直重複傳送，後面慢慢處理就好</div>
+            </div>
+          </div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node">
+            <span class="icon">🔀</span>
+            <div>
+              <div class="name">看你傳的是「文字」還是「照片」</div>
+              <div class="desc">照片 → 走「辨識發票」這條路；文字 → 走「理解你說的話」這條路</div>
+            </div>
+          </div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-branch">
+            <div class="flow-node">
+              <span class="icon">📷</span>
+              <div>
+                <div class="name">辨識發票（照片）</div>
+                <div class="desc">把照片交給 AI，請它讀出上面的金額、品項，整理成一筆記帳資料</div>
+              </div>
+            </div>
+            <div class="flow-node">
+              <span class="icon">🤖</span>
+              <div>
+                <div class="name">理解你說的話（文字）</div>
+                <div class="desc">把你打的字交給 AI，判斷你是要「記一筆帳」還是「查詢消費」，整理成固定格式</div>
+              </div>
+            </div>
+          </div>
+          <div class="flow-arrow">↓ 不管哪條路，最後都整理成同一種格式 ↓</div>
+          <div class="flow-node">
+            <span class="icon">🔱</span>
+            <div>
+              <div class="name">判斷你想「記帳」還是「查詢」</div>
+              <div class="desc">看 AI 整理出來的結果，決定接下來要往哪一條路走</div>
+            </div>
+          </div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-branch">
+            <div class="flow-node accent">
+              <span class="icon">✅</span>
+              <div>
+                <div class="name">記一筆帳</div>
+                <div class="desc">把這筆消費寫進 Google 試算表，再回 LINE 跟你說「記好了」</div>
+              </div>
+            </div>
+            <div class="flow-node">
+              <span class="icon">📊</span>
+              <div>
+                <div class="name">查詢消費紀錄</div>
+                <div class="desc">去 Google 試算表把資料抓出來，統計總共花多少、各類別比例，再回 LINE 給你看報告</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Google Sheets 欄位設計</h3>
+        <p class="muted">試算表名稱：<code class="inline">LINE記帳</code>｜工作表名稱：<code class="inline">records</code></p>
+        <table class="settings">
+          <tr><th>欄</th><th>欄位名稱</th><th>範例值</th></tr>
+          <tr><td>A</td><td><code>date</code></td><td>2026-06-09</td></tr>
+          <tr><td>B</td><td><code>time</code></td><td>14:30</td></tr>
+          <tr><td>C</td><td><code>category</code></td><td>餐飲</td></tr>
+          <tr><td>D</td><td><code>description</code></td><td>午餐便當</td></tr>
+          <tr><td>E</td><td><code>amount</code></td><td>120</td></tr>
+        </table>
+
+        <h3>26 個預設分類（AI 自動判斷）</h3>
+        <p class="muted">
+          餐飲、飲料咖啡、大眾交通、油資、停車費、計程車Uber、購物雜貨、服飾、租金、水電瓦斯、電話網路費、3C電器、
+          訂閱服務、醫療藥品、美容美髮、健身運動、娛樂、旅遊住宿、教育學習、書籍文具、保險、投資理財、孝親費、禮金紅包、寵物、其他
+        </p>
+        <div class="callout why">
+          <div class="callout-title">💡 為什麼要先固定分類清單？</div>
+          <p>
+            讓 AI 從固定清單中選擇，而不是自己亂取分類名稱，可以確保「飲料咖啡」永遠叫「飲料咖啡」，
+            不會有時候叫「咖啡」、有時候叫「飲料」，這樣統計時才能正確分組加總。
+          </p>
+        </div>
+      </section>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════
+         VIEW 2：Phase 0 — 前置作業精靈
+         ══════════════════════════════════════════════════ -->
+    <section class="view" id="view-prereq">
+      <h2><span class="num">0</span>Phase 0 — 前置作業</h2>
+      <p class="section-sub">
+        在打開 n8n 開始建立 workflow 之前，先準備好以下四樣東西。每張卡片可以點擊勾選，
+        幫助你掌握目前進度（勾選狀態會自動儲存在瀏覽器）。
+      </p>
+
+      <div class="prereq-checklist">
+        <div class="prereq-check-card" data-check="sheets">
+          <div class="pcc-box"></div>
+          <div>
+            <div class="pcc-title">📊 Spreadsheet ID</div>
+            <div class="pcc-desc">建立 Google 試算表，取得網址中的 ID</div>
+          </div>
+        </div>
+        <div class="prereq-check-card" data-check="gcp">
+          <div class="pcc-box"></div>
+          <div>
+            <div class="pcc-title">☁️ Google OAuth Client</div>
+            <div class="pcc-desc">Google Cloud Console 的 Client ID / Secret</div>
+          </div>
+        </div>
+        <div class="prereq-check-card" data-check="gemini">
+          <div class="pcc-box"></div>
+          <div>
+            <div class="pcc-title">✨ Gemini API Key</div>
+            <div class="pcc-desc">Google AI Studio 申請的免費 API Key</div>
+          </div>
+        </div>
+        <div class="prereq-check-card" data-check="line">
+          <div class="pcc-box"></div>
+          <div>
+            <div class="pcc-title">💬 LINE Token</div>
+            <div class="pcc-desc">LINE Official Account 的 Channel Access Token</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="prereq-tabs">
+        <button class="prereq-tab active" data-tab="sheets" type="button">📊 Google Sheets</button>
+        <button class="prereq-tab" data-tab="gcp" type="button">☁️ Google Cloud OAuth</button>
+        <button class="prereq-tab" data-tab="gemini" type="button">✨ Gemini API Key</button>
+        <button class="prereq-tab" data-tab="line" type="button">💬 LINE Bot</button>
+      </div>
+
+      <!-- ── Track: Google Sheets ── -->
+      <div class="prereq-track active" data-track="sheets">
+        <h3>0-1　建立 Google Sheets</h3>
+        <p class="muted">這是整個 Bot 的「資料庫」，所有記帳資料都存在這裡。</p>
+
+        <div class="prereq-step">
+          <div class="prereq-step-text">
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-body"><strong>新增一份 Google 試算表</strong><p>命名為 <code class="inline">LINE記帳</code>（名稱可自訂，但後面範例都用這個）。</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="prereq-step">
+          <div class="prereq-step-text">
+            <div class="step">
+              <div class="step-num">2</div>
+              <div class="step-body"><strong>把工作表（分頁）改名為 <code class="inline">records</code></strong><p>n8n 之後讀寫資料都會指定這個工作表名稱。</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="prereq-step">
+          <div class="prereq-step-text">
+            <div class="step">
+              <div class="step-num">3</div>
+              <div class="step-body"><strong>在 A1~E1 填入欄位標題</strong><p><code class="inline">date | time | category | description | amount</code></p></div>
+            </div>
+          </div>
+          <div class="prereq-step-shot">
+            <div class="shot">
+              <div class="frame">
+                <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+                <img src="assets/sheets-created.png" alt="Google Sheets 建立完成" />
+              </div>
+              <div class="caption">試算表名稱「LINE記帳」、工作表 Tab 改為「records」，A~E 欄標題已設定完成。</div>
+            </div>
+          </div>
+        </div>
+        <div class="prereq-step">
+          <div class="prereq-step-text">
+            <div class="step">
+              <div class="step-num">4</div>
+              <div class="step-body"><strong>記下試算表 ID</strong><p>網址列 <code class="inline">https://docs.google.com/spreadsheets/d/【這段就是ID】/edit</code> 中間那一長串，後面 HTTP Request 節點會用到。</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout token">
+          <div class="callout-title">🔑 此階段應該已拿到</div>
+          <p>✅ 試算表 ID（從網址列複製）—— 後面寫入 Sheet 的 HTTP Request 節點會用到。</p>
+        </div>
+      </div>
+
+      <!-- ── Track: Google Cloud OAuth ── -->
+      <div class="prereq-track" data-track="gcp">
+        <h3>0-2　Google Cloud Console — 建立 OAuth 憑證</h3>
+        <p class="muted">目的：取得 Client ID + Client Secret，讓 n8n 能用你的 Google 帳號讀寫 Sheets。</p>
+
+        <div class="callout tip">
+          <div class="callout-title">📌 建議專案名稱</div>
+          <p>建立一個新的 Google Cloud 專案，命名為 <code>LINE expense tracker bot</code>，方便辨識，與其他專案分開管理。</p>
+        </div>
+
+        <div class="prereq-step">
+          <div class="prereq-step-text">
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-body">
+                <strong>進入 APIs &amp; Services</strong>
+                <p>Google Cloud Console 主畫面 → Quick access → 點 <strong>APIs &amp; Services</strong>。</p>
+              </div>
+            </div>
+          </div>
+          <div class="prereq-step-shot">
+            <div class="shot">
+              <div class="frame">
+                <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+                <img src="assets/gcp-apis-services.png" alt="Google Cloud APIs and Services" />
+              </div>
+              <div class="caption">Google Cloud 首頁，從 Quick access 點 APIs &amp; Services。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="prereq-step">
+          <div class="prereq-step-text">
+            <div class="step">
+              <div class="step-num">2</div>
+              <div class="step-body">
+                <strong>啟用必要的 API</strong>
+                <p>APIs &amp; Services → 啟用 API 和服務 → 分別搜尋並啟用 <code class="inline">Google Sheets API</code> 與 <code class="inline">Google Drive API</code>。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="prereq-step">
+          <div class="prereq-step-text">
+            <div class="step">
+              <div class="step-num">3</div>
+              <div class="step-body">
+                <strong>設定 OAuth 同意畫面（Consent Screen）</strong>
+                <p>左側選單 → Google Auth Platform → Clients → Create client → 系統會要求先設定 consent screen，共 4 步：App name 填 <code class="inline">LINE expense tracker bot</code>、User support email 選自己的 Gmail、Audience 選 <strong>External</strong>、Contact Information 填 email，最後點 Create。</p>
+              </div>
+            </div>
+          </div>
+          <div class="prereq-step-shot">
+            <div class="shot-grid">
+              <div class="shot">
+                <div class="frame">
+                  <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+                  <img src="assets/gcp-consent-screen-warning.png" alt="需要先設定 consent screen" />
+                </div>
+                <div class="caption">建立 Client 前，系統提示需先設定 Consent Screen。</div>
+              </div>
+              <div class="shot">
+                <div class="frame">
+                  <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+                  <img src="assets/gcp-consent-screen-info.png" alt="Consent Screen 填寫 App 名稱與 email" />
+                </div>
+                <div class="caption">Consent Screen：填寫 App 名稱與 support email。</div>
+              </div>
+              <div class="shot">
+                <div class="frame">
+                  <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+                  <img src="assets/gcp-consent-screen-done.png" alt="Consent Screen 四個步驟完成" />
+                </div>
+                <div class="caption">四個步驟全部完成後點 Create。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="prereq-step">
+          <div class="prereq-step-text">
+            <div class="step">
+              <div class="step-num">4</div>
+              <div class="step-body">
+                <strong>建立 OAuth Client ID</strong>
+                <p>回到 Clients → Create client → Application type 選 <strong>Web application</strong> → Name 填 <code class="inline">LINE expense tracker bot</code> → Authorized redirect URIs 填入 n8n 顯示的 OAuth Redirect URL（格式如下）→ 點 Create。</p>
+              </div>
+            </div>
+            <div class="code-block">
+              <div class="code-head">
+                <span class="code-lang">Redirect URI 格式</span>
+                <button class="copy-btn" data-label="複製">複製</button>
+              </div>
+              <pre>https://【你的n8n網址】/rest/oauth2-credential/callback</pre>
+            </div>
+          </div>
+          <div class="prereq-step-shot">
+            <div class="shot-grid">
+              <div class="shot">
+                <div class="frame">
+                  <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+                  <img src="assets/gcp-oauth-client-create.png" alt="填入 Application type、Name、Redirect URI" />
+                </div>
+                <div class="caption">建立 OAuth Client：選擇 Web application，填入 Redirect URI。</div>
+              </div>
+              <div class="shot">
+                <div class="frame">
+                  <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+                  <img src="assets/gcp-oauth-client-created.png" alt="OAuth client 建立成功" />
+                </div>
+                <div class="caption">建立成功，顯示 Client ID 與 Client secret（只顯示一次）。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout warn">
+          <div class="callout-title">⚠️ Client secret 只顯示一次</div>
+          <p>建立成功後彈出視窗會顯示 <strong>Client ID</strong> 和 <strong>Client secret</strong>，關掉視窗後就看不到了，請立刻複製儲存到安全的地方。</p>
+        </div>
+
+        <div class="callout warn">
+          <div class="callout-title">⚠️ Test users 限制</div>
+          <p>畫面會提示「OAuth access is restricted to test users」，需先到 <strong>Audience → Add users</strong>，把自己的 Google 帳號加進去，否則後面授權會失敗。</p>
+        </div>
+
+        <div class="prereq-step">
+          <div class="prereq-step-text">
+            <div class="step">
+              <div class="step-num">5</div>
+              <div class="step-body">
+                <strong>把 Client ID / Secret 填回 n8n</strong>
+                <p>n8n → 左側選單點 <strong>Personal</strong> → Credentials → Create Credential → 搜尋 <code class="inline">Google Sheets OAuth2 API</code> → 貼上 Client ID 和 Client Secret → 點 Connect → 登入 Google 並授權（選剛剛加入的測試帳號）→ 命名為 <code class="inline">Google Sheets - 記帳</code> → Save。</p>
+              </div>
+            </div>
+          </div>
+          <div class="prereq-step-shot">
+            <div class="shot">
+              <div class="frame">
+                <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+                <img src="assets/n8n-sheets-credential-connected.png" alt="n8n 顯示 Account connected" />
+              </div>
+              <div class="caption">n8n 中建立 Google Sheets OAuth2 API 憑證，連線成功後頂部顯示綠色「Account connected」。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout token">
+          <div class="callout-title">🔑 此階段應該已拿到</div>
+          <p>✅ Google Sheets OAuth2 憑證（已在 n8n 連線成功）—— 用在「讀取 Sheet」與「寫入 Sheet」節點。</p>
+        </div>
+      </div>
+
+      <!-- ── Track: Gemini API Key ── -->
+      <div class="prereq-track" data-track="gemini">
+        <h3>0-3　取得 Gemini API Key</h3>
+        <p class="muted">這把 Key 是讓 n8n 呼叫 Gemini AI 的「通行證」，免費額度足夠個人使用。</p>
+
+        <div class="prereq-step">
+          <div class="prereq-step-text">
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-body"><strong>前往 Google AI Studio</strong><p>網址：<code class="inline">https://aistudio.google.com/apikey</code></p></div>
+            </div>
+          </div>
+        </div>
+        <div class="prereq-step">
+          <div class="prereq-step-text">
+            <div class="step">
+              <div class="step-num">2</div>
+              <div class="step-body"><strong>建立 API Key</strong><p>點右上角 <strong>Create API key</strong> → 選擇剛建立的專案 <code class="inline">LINE expense tracker bot</code> → 建立 → 複製 Key。</p></div>
+            </div>
+          </div>
+          <div class="prereq-step-shot">
+            <div class="shot">
+              <div class="frame">
+                <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+                <img src="assets/aistudio-api-key.png" alt="Google AI Studio 建立 API Key" />
+              </div>
+              <div class="caption">Google AI Studio：建立 API Key，專案選擇 LINE expense tracker bot（Free tier）。</div>
+            </div>
+          </div>
+        </div>
+        <div class="prereq-step">
+          <div class="prereq-step-text">
+            <div class="step">
+              <div class="step-num">3</div>
+              <div class="step-body"><strong>填回 n8n</strong><p>n8n → Personal → Credentials → Create Credential → 搜尋 <code class="inline">Google Gemini(PaLM) Api</code> → 貼上 API Key → 命名為 <code class="inline">LINE記帳</code> → Save。</p></div>
+            </div>
+          </div>
+          <div class="prereq-step-shot">
+            <div class="shot">
+              <div class="frame">
+                <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+                <img src="assets/n8n-gemini-credential.png" alt="n8n 填入 Gemini API Key" />
+              </div>
+              <div class="caption">n8n：填入 Gemini API Key，命名為「LINE記帳」。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout tip">
+          <div class="callout-title">📌 Host 欄位</div>
+          <p>保持預設值 <code class="inline">https://generativelanguage.googleapis.com</code> 不用更動。</p>
+        </div>
+
+        <div class="callout token">
+          <div class="callout-title">🔑 此階段應該已拿到</div>
+          <p>✅ Gemini API Key（已在 n8n 建立憑證）—— 用在 AI Agent 的 Chat Model，以及圖片路徑的 Gemini Vision HTTP Request。</p>
+        </div>
+      </div>
+
+      <!-- ── Track: LINE Bot ── -->
+      <div class="prereq-track" data-track="line">
+        <h3>0-4　LINE Bot 設定</h3>
+        <p class="muted">建立 LINE Official Account，並開啟 Messaging API 功能。</p>
+
+        <div class="callout glossary">
+          <div class="callout-title">📖 名詞對照：先搞懂這幾個詞的關係</div>
+          <dl>
+            <dt>Provider</dt>
+            <dd>最上層的「開發者帳號」分類，一個 Provider 底下可以有多個 Official Account / Channel。先建立一個 Provider 當容器即可。</dd>
+            <dt>LINE Official Account（OA）</dt>
+            <dd>「官方帳號」本身——使用者在 LINE 上加好友、聊天的對象，之後用戶都是跟這個帳號互動。</dd>
+            <dt>Messaging API Channel</dt>
+            <dd>把一個 Official Account「升級」成可以被程式控制的頻道，啟用後才能用 API 收發訊息。一個 OA 對應一個 Messaging API Channel。</dd>
+            <dt>Channel secret</dt>
+            <dd>用來驗證 Webhook 來源是否為 LINE 官方的密鑰（本教學流程中不會直接用到，但要知道它和 Token 不是同一個東西）。</dd>
+            <dt>Channel access token</dt>
+            <dd>呼叫 LINE API（例如 Push Message 主動傳訊息給用戶）時要附帶的「通行證」，是本教學最重要、會實際用到的憑證。</dd>
+          </dl>
+        </div>
+
+        <div class="callout warn">
+          <div class="callout-title">⚠️ 兩個重要限制</div>
+          <p>
+            LINE 已不支援從 Developer Console 直接建立 Messaging API channel，需先建立 <strong>LINE Official Account</strong>，
+            再從官方帳號後台開啟 Messaging API。另外，<strong>帳號名稱不能包含「LINE」字樣</strong>，這個詞被官方保留使用。
+          </p>
+        </div>
+
+        <div class="prereq-step">
+          <div class="prereq-step-text">
+            <h4 style="margin:0 0 6px;">0-4a：建立 Provider</h4>
+            <p class="muted">前往 <code class="inline">https://developers.line.biz</code> → 登入 → 左側 Providers → Create a new provider，名稱填 <code class="inline">記帳bot</code>（不能用 LINE）→ Create。</p>
+          </div>
+          <div class="prereq-step-shot">
+            <div class="shot">
+              <div class="frame">
+                <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+                <img src="assets/line-create-provider.png" alt="建立 Provider" />
+              </div>
+              <div class="caption">建立 Provider，名稱填「記帳bot」（不能用 LINE）。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="prereq-step">
+          <div class="prereq-step-text">
+            <h4 style="margin:0 0 6px;">0-4b：建立 LINE Official Account</h4>
+            <p class="muted">進入 Provider 後 → Create a new channel → 頁面顯示無法直接建立 → 點綠色按鈕 <strong>Create a LINE Official Account</strong>（會跳轉到外部網站）。</p>
+          </div>
+          <div class="prereq-step-shot">
+            <div class="shot">
+              <div class="frame">
+                <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+                <img src="assets/line-create-oa-button.png" alt="點 Create a LINE Official Account 按鈕" />
+              </div>
+              <div class="caption">點擊 Create a LINE Official Account 按鈕。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="prereq-step">
+          <div class="prereq-step-text">
+            <h4 style="margin:0 0 6px;">0-4c：填寫官方帳號資訊</h4>
+            <p class="muted">帳號名稱填 <code class="inline">記帳bot</code>（不能含 LINE）→ 填寫其餘必填欄位 → 送出申請。</p>
+          </div>
+          <div class="prereq-step-shot">
+            <div class="shot">
+              <div class="frame">
+                <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+                <img src="assets/line-oa-info.png" alt="建立 LINE 官方帳號" />
+              </div>
+              <div class="caption">建立 LINE 官方帳號，帳號名稱填「記帳bot」。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="prereq-step">
+          <div class="prereq-step-text">
+            <h4 style="margin:0 0 6px;">0-4d：啟用 Messaging API</h4>
+            <p class="muted">官方帳號建立完成後，進入 <strong>LINE Official Account Manager</strong> → 右上角「設定」→ 左側「Messaging API」→ 點「啟用Messaging API」→ 選擇 Provider「記帳bot」→ 確認。</p>
+          </div>
+          <div class="prereq-step-shot">
+            <div class="shot-grid">
+              <div class="shot">
+                <div class="frame">
+                  <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+                  <img src="assets/line-enable-messaging-api.png" alt="點擊啟用Messaging API按鈕" />
+                </div>
+                <div class="caption">點擊「啟用 Messaging API」按鈕，目前狀態為未使用。</div>
+              </div>
+              <div class="shot">
+                <div class="frame">
+                  <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+                  <img src="assets/line-messaging-api-enabled.png" alt="啟用成功，顯示 Channel ID 和 Channel secret" />
+                </div>
+                <div class="caption">啟用成功，狀態變為使用中，顯示 Channel ID 與 Channel secret。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="prereq-step">
+          <div class="prereq-step-text">
+            <h4 style="margin:0 0 6px;">0-4e：取得 Channel Access Token，並關閉自動回覆</h4>
+            <p class="muted">進到 LINE Developers Console → 你的 Channel → Messaging API 頁籤：</p>
+            <ul class="clean">
+              <li><strong>Channel access token</strong> → 點 Issue → 複製 Token 並安全保存</li>
+              <li><strong>Auto-reply messages</strong> → 點 Edit → 到官方帳號後台<strong>關閉</strong></li>
+              <li><strong>Greeting messages</strong> → 點 Edit → 到官方帳號後台<strong>關閉</strong></li>
+            </ul>
+          </div>
+          <div class="prereq-step-shot">
+            <div class="shot">
+              <div class="frame">
+                <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+                <img src="assets/line-channel-token-issue.png" alt="Channel Access Token 的 Issue 按鈕" />
+              </div>
+              <div class="caption">Channel Access Token 的 Issue 按鈕，以及 Auto-reply / Greeting messages 設定入口。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout warn">
+          <div class="callout-title">⚠️ 為什麼一定要關閉自動回覆？</div>
+          <p>Auto-reply 和 Greeting 若不關閉，LINE 會自動回覆固定訊息，跟 Bot 的回覆同時出現，用戶會收到兩則訊息，造成混亂。</p>
+        </div>
+
+        <div class="callout token">
+          <div class="callout-title">🔑 此階段應該已拿到</div>
+          <p>✅ Channel secret　✅ Channel Access Token（long-lived）—— 這兩個之後在 n8n 的 HTTP Request / Code 節點會用到，後面的「送出LINE」節點需要 Channel Access Token。</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════
+         VIEW 3：互動架構圖
+         ══════════════════════════════════════════════════ -->
+    <section class="view" id="view-diagram">
+      <h2><span class="num">🗺️</span>互動架構圖</h2>
+      <p class="section-sub">這就是你打開 n8n workflow 時會看到的樣子（19 個節點）。點擊任一個節點，右側會滑出該節點的完整教學。</p>
+
+      <div class="diagram-hint">👆 點擊節點查看教學・滾輪／雙指可縮放・拖曳可移動畫布</div>
+
+      <div class="diagram-legend">
+        <span class="legend-item"><span class="legend-dot" style="background:var(--purple)"></span>觸發 / Webhook</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--muted)"></span>分流（Switch / If）</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--blue)"></span>Code 節點</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span>AI Agent</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--teal)"></span>AI 模型</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--orange)"></span>HTTP Request</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--yellow)"></span>Google Sheets</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--dim);border:1px dashed var(--dim)"></span>未使用 / 可刪除</span>
+      </div>
+
+      <div class="workflow-diagram-wrap"></div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════
+         VIEW 4：測試 & 完成
+         ══════════════════════════════════════════════════ -->
+    <section class="view" id="view-finish">
+
+      <section id="credentials">
+        <h2><span class="num">📋</span>憑證 / Token 對照表</h2>
+        <p class="section-sub">四種憑證，分別用在不同節點，教學時務必說清楚每一個從哪裡拿、用在哪裡。</p>
+
+        <table class="settings">
+          <tr><th>用途</th><th>類型</th><th>去哪裡取得</th><th>用在哪個節點</th></tr>
+          <tr>
+            <td>Google Sheets 讀寫</td>
+            <td>OAuth2</td>
+            <td>Google Cloud Console → 憑證 → OAuth 2.0 用戶端 ID</td>
+            <td>HTTP Request（寫 Sheet）、Get row(s) in sheet</td>
+          </tr>
+          <tr>
+            <td>Gemini Vision（圖片路徑）</td>
+            <td>API Key（Query Auth）</td>
+            <td>Google AI Studio → Get API Key</td>
+            <td>HTTP Request（呼叫 Gemini Vision API）</td>
+          </tr>
+          <tr>
+            <td>Gemini Chat Model（文字路徑）</td>
+            <td>API Key</td>
+            <td>Google AI Studio → 同上（同一把 Key，建立方式不同）</td>
+            <td>AI Agent 的 Google Gemini Chat Model</td>
+          </tr>
+          <tr>
+            <td>LINE Push Message</td>
+            <td>Channel Access Token</td>
+            <td>LINE Developers → Channel → Messaging API → Channel access token</td>
+            <td>送出LINE、送出LINE1（Code 節點）</td>
+          </tr>
+        </table>
+
+        <div class="callout warn">
+          <div class="callout-title">⚠️ 常見混淆</div>
+          <p>
+            <strong>LINE Channel Access Token ≠ LINE Login Channel Secret</strong>，要選 <strong>Messaging API</strong> 分頁的那個。
+            <br /><strong>Gemini API Key</strong> 來自 AI Studio，跟 Google Cloud Console 的一般 API Key 不同（雖然兩者外觀相似）。
+          </p>
+        </div>
+      </section>
+
+      <section id="testing">
+        <h2><span class="num">🧪</span>測試案例</h2>
+        <p class="section-sub">建好之後，用以下訊息實際在 LINE 上測試。</p>
+
+        <h3>📷 沒有發票？用這張範例照片測試</h3>
+        <div class="shot shot-narrow">
+          <div class="frame">
+            <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+            <img src="assets/sample-receipt.png" alt="範例發票" />
+          </div>
+          <div class="caption">
+            想測試「拍照記帳」但手邊沒有發票？可以直接複製這張範例照片，貼到 LINE 聊天室傳給機器人。
+            <button class="copy-img-btn" data-img="assets/sample-receipt.png" title="複製這張圖片">📋 複製圖片</button>
+          </div>
+        </div>
+        <p class="muted">電腦：點上面「複製圖片」，再到 LINE 聊天室按 ⌘V／Ctrl+V 貼上送出。手機：點圖片放大後長按，選「拷貝照片」或「儲存照片」，再到 LINE 選取傳送。</p>
+
+        <table class="settings">
+          <tr><th>輸入</th><th>預期回覆</th></tr>
+          <tr><td><code>午餐120</code></td><td>✅ 記帳完成！餐飲｜午餐 $120</td></tr>
+          <tr><td><code>Uber到公司280</code></td><td>✅ 記帳完成！計程車Uber｜Uber $280</td></tr>
+          <tr><td><code>Netflix訂閱390</code></td><td>✅ 記帳完成！訂閱服務｜Netflix $390</td></tr>
+          <tr><td>傳發票照片</td><td>✅ 記帳完成！自動辨識品項與金額</td></tr>
+          <tr><td><code>今天花多少</code></td><td>📊 今日消費分析</td></tr>
+          <tr><td><code>幫我整理本週消費</code></td><td>📊 本週分析（含分類明細）</td></tr>
+          <tr><td><code>1/1~6/9消費</code></td><td>📊 自訂區間分析</td></tr>
+          <tr><td><code>上個月花多少</code></td><td>📊 上月分析</td></tr>
+        </table>
+      </section>
+
+      <section id="done">
+        <h2><span class="num">🎉</span>完成！</h2>
+        <p class="section-sub">恭喜！整條 workflow 跑通了。以下用簡單的方式說明這個設計的幾個重點。</p>
+
+        <div class="shot">
+          <div class="frame">
+            <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+            <img src="assets/n8n-workflow-success.png" alt="完整 Workflow 測試成功" />
+          </div>
+          <div class="caption">完整 Workflow 測試成功：每個節點都顯示綠色勾勾，代表執行無誤。</div>
+        </div>
+
+        <div class="callout why">
+          <div class="callout-title">✅ 傳「午餐120」測試流程</div>
+          <p>LINE Bot 收到「午餐120」 → AI 判斷是「記帳」、分類是「餐飲」 → Google Sheet 自動新增一列 → LINE 收到「✅ 記帳完成！」回覆。</p>
+        </div>
+
+        <h3>這個設計為什麼長這樣？</h3>
+        <ul class="clean">
+          <li><strong>寫入 Google Sheet 用「直接呼叫 API」的方式</strong>：這樣可以自由決定要寫進哪一欄、哪一列，比較有彈性。</li>
+          <li><strong>呼叫 LINE 和 Gemini 都用「程式碼節點」自己組訊息</strong>：這樣可以完全控制傳出去的內容長什麼樣子。</li>
+          <li><strong>多了一個「加入日期」節點</strong>：讓 AI 先知道「今天是幾號」，使用者問「昨天」「這個月」花多少錢時才能算得準。</li>
+          <li><strong>LINE 訊息一進來就先「立刻回應」，結果之後再補發一則訊息</strong>：因為 AI 處理需要幾秒鐘，先回應可以避免 LINE 那邊顯示逾時或失敗，體驗比較順暢。</li>
+          <li><strong>AI 回傳的內容會先經過一道「清理」程序</strong>：AI 偶爾會多加一些格式符號，先清乾淨，後面的步驟才能正確讀懂。</li>
+          <li><strong>收到圖片訊息時，會多一個步驟去下載圖片</strong>：因為 LINE 一開始只會給「這張圖片的編號」，要再跟 LINE 要一次圖片本身才看得到內容。</li>
+        </ul>
+      </section>
+
+      <div class="page-footer">
+        LINE 記帳 Bot 建置全攻略 — 內容僅供內部教學使用，所有 Token / ID 皆為佔位符，請替換為自己的憑證。
+      </div>
+
+    </section>
+
+  </main>
+</div>
+
+<!-- ════════════ 節點教學 Panel（互動架構圖用）════════════ -->
+<div class="node-panel-overlay"></div>
+<div class="node-panel">
+  <div class="node-panel-head">
+    <div>
+      <span class="node-panel-type node-type-badge"></span>
+      <h2 class="node-panel-title"></h2>
+    </div>
+    <button class="node-panel-close" title="關閉">×</button>
+  </div>
+  <div class="node-panel-body">
+    <!-- ══════════ webhook ══════════ -->
+    <section class="node-panel-content" data-node="webhook" hidden>
+      <p class="section-sub">整個 workflow 的入口，接收 LINE 傳來的所有訊息事件。</p>
+
+      <h3>新增 Workflow</h3>
+      <p class="muted">n8n → New Workflow → 命名為 <code class="inline">LINE記帳Bot</code>。</p>
+
+      <h3>Webhook 節點設定</h3>
+      <table class="settings">
+        <tr><td>節點類型</td><td><code>Webhook</code></td></tr>
+        <tr><td>HTTP Method</td><td><code>POST</code></td></tr>
+        <tr><td>Path</td><td><code>line-ledger</code></td></tr>
+        <tr><td>Respond</td><td><code>Immediately</code></td></tr>
+      </table>
+
+      <div class="shot">
+        <div class="frame">
+          <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+          <img src="assets/n8n-webhook-node.png" alt="Webhook 節點設定" />
+        </div>
+        <div class="caption">Webhook 節點設定：POST、Path = line-ledger、Respond = Immediately。</div>
+      </div>
+
+      <div class="callout why">
+        <div class="callout-title">💡 為什麼用「Respond: Immediately」？</div>
+        <p>
+          LINE 要求 Webhook 在 <strong>1 秒內</strong>回傳 200 OK，否則會重試發送。
+          但 AI 處理（辨識文字/圖片、查詢統計）通常需要 3-10 秒，如果用「Last node」回應會超時報錯，
+          而且 LINE 的 <strong>Reply Token 只能用一次</strong>——選 Immediately 可以先回 200 OK 給 LINE，
+          後續節點繼續在背景跑，最後改用 <strong>Push Message API</strong> 主動把結果傳給用戶。
+        </p>
+      </div>
+
+      <h3>兩種 URL 的差異</h3>
+      <table class="settings">
+        <tr><td>Test URL</td><td><code>https://【n8n網址】/webhook-test/line-ledger</code>（workflow 未啟用時用，測試用途） <button class="inline-copy" data-template="https://{{n8nUrl}}/webhook-test/line-ledger" title="複製我的 Test URL">📋</button></td></tr>
+        <tr><td>Production URL</td><td><code>https://【n8n網址】/webhook/line-ledger</code>（workflow 啟用後才生效，填入 LINE） <button class="inline-copy" data-template="https://{{n8nUrl}}/webhook/line-ledger" title="複製我的 Production URL">📋</button></td></tr>
+      </table>
+
+      <h3>啟用 Workflow，並把 Webhook URL 填入 LINE</h3>
+      <div class="shot">
+        <div class="frame">
+          <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+          <img src="assets/n8n-workflow-active.png" alt="n8n workflow Active 已開啟" />
+        </div>
+        <div class="caption">n8n workflow 已命名「LINE記帳bot」，右上角 Active 開關已開啟（綠色）。</div>
+      </div>
+
+      <div class="shot-grid">
+        <div class="shot">
+          <div class="frame">
+            <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+            <img src="assets/line-oa-webhook-url.png" alt="LINE Official Account Manager 填入 Webhook URL" />
+          </div>
+          <div class="caption">LINE Official Account Manager：設定 → Messaging API → 填入 Production URL → 儲存。</div>
+        </div>
+        <div class="shot">
+          <div class="frame">
+            <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+            <img src="assets/line-dev-webhook-verify.png" alt="LINE Developers Console 點 Verify 驗證" />
+          </div>
+          <div class="caption">LINE Developers Console：Webhook URL 已填入，點 Verify 驗證 n8n 有回應。</div>
+        </div>
+      </div>
+      <div class="shot">
+        <div class="frame">
+          <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+          <img src="assets/line-dev-use-webhook-on.png" alt="Use webhook 已開啟" />
+        </div>
+        <div class="caption">驗證成功後再開啟「Use webhook」滑桿（綠色），LINE 收到訊息就會即時轉發到 n8n。</div>
+      </div>
+
+      <h3>LINE 傳來的資料結構</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">JSON 結構（重點欄位）</span>
+          <button class="copy-btn" data-label="複製">複製</button>
+        </div>
+        <pre>body.events[0].type                  // "message"
+body.events[0].message.type          // "text" 或 "image"
+body.events[0].message.text          // "午餐120"（文字訊息才有）
+body.events[0].message.id            // 圖片訊息的 messageId
+body.events[0].source.userId         // "U71107..."（用戶 ID，回覆訊息用）</pre>
+      </div>
+    </section>
+
+    <!-- ══════════ switch ══════════ -->
+    <section class="node-panel-content" data-node="switch" hidden>
+      <p class="section-sub">根據訊息類型，把流程分成兩條完全不同的處理路徑。</p>
+
+      <table class="settings">
+        <tr><td>模式</td><td><code>Rules</code></td></tr>
+        <tr>
+          <td>Rule 1（image）</td>
+          <td>
+            Value: <code>{{ $json.body.events[0].message.type }}</code><br />
+            Operation: <code>is equal to</code>　Value: <code>image</code><br />
+            Rename Output → Output Name: <code>image</code>
+          </td>
+        </tr>
+        <tr>
+          <td>Rule 2（text）</td>
+          <td>
+            Value: <code>{{ $json.body.events[0].message.type }}</code><br />
+            Operation: <code>is equal to</code>　Value: <code>text</code><br />
+            Rename Output → Output Name: <code>text</code>
+          </td>
+        </tr>
+      </table>
+
+      <div class="shot">
+        <div class="frame">
+          <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+          <img src="assets/n8n-switch-node.png" alt="Switch 節點設定" />
+        </div>
+        <div class="caption">Switch 節點：兩條 Rules 分別對應 image 和 text。</div>
+      </div>
+
+      <div class="callout why">
+        <div class="callout-title">💡 為什麼用 Switch，而且用 is equal to？</div>
+        <p>
+          LINE 傳來的訊息只有兩種主要類型：<strong>文字</strong>和<strong>圖片</strong>，兩者後續處理方式完全不同——
+          文字直接走 AI Agent 理解語意；圖片則需要先下載 binary 檔案，再送進 Gemini Vision API 辨識。
+          <code>message.type</code> 的值是精確字串 <code>"image"</code> / <code>"text"</code>，
+          屬於完全比對，所以用 <strong>is equal to</strong> 而非 <strong>contains</strong>。
+        </p>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-title">📌 設計重點：兩條路徑輸出格式要一致</div>
+        <p>
+          不論走哪條路徑，最終都要輸出相同格式 <code class="inline">{ output: "{...json...}" }</code>，
+          這樣下游的 If 節點才能用同一套邏輯判斷，不用為兩條路徑各寫一次條件判斷。
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════ get-image ══════════ -->
+    <section class="node-panel-content" data-node="get-image" hidden>
+      <p class="section-sub">圖片不會包含在 Webhook payload 裡，需要另外用 messageId 向 LINE 下載。</p>
+
+      <table class="settings">
+        <tr><td>節點名稱</td><td><code>取得圖片</code></td></tr>
+        <tr><td>類型</td><td><code>HTTP Request</code></td></tr>
+        <tr><td>Method</td><td><code>GET</code></td></tr>
+        <tr><td>URL</td><td><code>https://api-data.line.me/v2/bot/message/{{ $json.body.events[0].message.id }}/content</code></td></tr>
+        <tr><td>Authentication</td><td><code>Generic Credential Type</code> → Generic Auth Type: <code>Bearer Auth</code></td></tr>
+        <tr><td>Bearer Token</td><td>建立憑證，填入【LINE Channel Access Token】 <button class="inline-copy" data-field="lineToken" title="複製我的 Token">📋</button></td></tr>
+        <tr><td>Options → Response Format</td><td><code>File</code></td></tr>
+        <tr><td>Put Output in Field</td><td><code>data</code></td></tr>
+      </table>
+
+      <div class="shot-grid">
+        <div class="shot">
+          <div class="frame">
+            <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+            <img src="assets/n8n-get-image-node-top.png" alt="取得圖片節點上半部" />
+          </div>
+          <div class="caption">取得圖片節點上半部：Method、URL、Bearer Auth 設定。</div>
+        </div>
+        <div class="shot">
+          <div class="frame">
+            <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+            <img src="assets/n8n-get-image-node-bottom.png" alt="取得圖片節點下半部" />
+          </div>
+          <div class="caption">下半部：Options → Response Format 設為 File，binary 存入 data 欄位。</div>
+        </div>
+      </div>
+
+      <div class="callout why">
+        <div class="callout-title">💡 為什麼 Response Format 要設為 File？</div>
+        <p>
+          設為 <code>File</code> 後，圖片會以 <strong>binary</strong> 格式存入 <code>data</code> 欄位，
+          後續的「轉base64」節點才能正確讀到原始圖片二進位資料，再轉成 Gemini Vision API 需要的 base64 字串。
+          如果用預設的 JSON 格式，會拿到亂碼或解析錯誤。
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════ add-date ══════════ -->
+    <section class="node-panel-content" data-node="add-date" hidden>
+      <p class="section-sub">放在 Switch（text 輸出）→ AI Agent 之間，先用 Code 節點算好今天日期與現在時間。</p>
+
+      <div class="callout warn">
+        <div class="callout-title">⚠️ 為什麼需要這個節點？</div>
+        <p>
+          n8n AI Agent 的 <strong>System Message 欄位不會解析</strong> <code>{{ $now }}</code> 這類表達式——
+          Gemini 會直接把字串 <code>"{{ $now }}"</code> 當成文字內容輸出，導致記帳日期變成錯誤的字串。
+          解法是改用 Code 節點先計算好日期時間，再透過 <strong>Prompt（User Message）</strong>傳給 AI Agent。
+        </p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">JavaScript — 加入日期</span>
+          <button class="copy-btn" data-label="複製">複製</button>
+        </div>
+        <pre>const now = $now.setZone('Asia/Taipei');
+return [{
+  json: {
+    ...$input.item.json,
+    _today: now.toFormat('yyyy-MM-dd'),
+    _time: now.toFormat('HH:mm')
+  }
+}];</pre>
+      </div>
+
+      <div class="shot">
+        <div class="frame">
+          <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+          <img src="assets/n8n-add-date-code.png" alt="加入日期 Code 節點" />
+        </div>
+        <div class="caption">加入日期 Code 節點：放在 Switch 和 AI Agent 之間，負責注入今日日期與時間。</div>
+      </div>
+    </section>
+
+    <!-- ══════════ ai-agent ══════════ -->
+    <section class="node-panel-content" data-node="ai-agent" hidden>
+      <p class="section-sub">文字路徑的核心：理解語意並輸出結構化 JSON，交給後面的「清理文字輸出」與 If 節點。</p>
+
+      <h3>AI Agent 節點設定</h3>
+      <table class="settings">
+        <tr><td>節點類型</td><td><code>AI Agent</code></td></tr>
+        <tr><td>Source for Prompt</td><td><code>Define below</code></td></tr>
+        <tr><td>Chat Model</td><td><code>Google Gemini Chat Model</code>（憑證：LINE記帳）</td></tr>
+        <tr><td>Model</td><td><code>models/gemini-3.1-flash-lite</code></td></tr>
+      </table>
+
+      <div class="callout tip">
+        <div class="callout-title">💡 為什麼選 <code class="inline">gemini-3.1-flash-lite</code> 而不是 <code class="inline">gemini-2.5-flash</code>？</div>
+        <p>
+          <code class="inline">gemini-2.5-flash</code> 太熱門，常常遇到
+          <code class="inline">503 Service Unavailable / UNAVAILABLE（high demand）</code>。
+          換成 <code class="inline">gemini-3.1-flash-lite</code> 之後，伺服器負載較低、回應也更快，
+          記帳這種簡單的文字／圖片分類任務不需要最強模型，輕量版就很夠用。
+          如果之後又開始頻繁出現 503，可以在下拉選單裡換成其他 <code class="inline">flash</code> 系列模型試試。
+        </p>
+      </div>
+
+      <p class="muted">Prompt（User Message）：</p>
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">Prompt 表達式</span>
+          <button class="copy-btn" data-label="複製">複製</button>
+        </div>
+        <pre>今天是{{ $json._today }}，現在是{{ $json._time }}。用戶說：{{ $json.body.events[0].message.text }}</pre>
+      </div>
+
+      <div class="shot">
+        <div class="frame">
+          <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+          <img src="assets/n8n-ai-agent-node.png" alt="AI Agent 設定" />
+        </div>
+        <div class="caption">AI Agent 設定：Prompt 包含日期、時間與用戶訊息，System Message 為純文字記帳指令。</div>
+      </div>
+
+      <h3>System Message（Fixed 模式，純文字，不含任何 {{ }} 表達式）</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">System Prompt</span>
+          <button class="copy-btn" data-label="複製">複製</button>
+        </div>
+        <pre>你是一個記帳助理。分析用戶輸入，回傳標準 JSON，不得有多餘文字或 markdown。
+
+【意圖判斷】
+含「花多少」「花了」「統計」「整理」「分析」「本週」「上週」「本月」「上個月」
+「今天」「昨天」「最近」或包含日期區間格式 → intent: "query"
+其餘 → intent: "record"
+
+【記帳輸出格式】
+{"intent":"record","date":"YYYY-MM-DD","time":"HH:mm","category":"從下方清單選一","description":"簡短描述品項","amount":數字}
+
+【多筆記帳】
+若用戶一次輸入包含多筆消費（例如「早餐100 咖啡50」），回傳 JSON 陣列，每個元素都是一筆記帳物件：
+[{"intent":"record","date":"...","time":"...","category":"...","description":"...","amount":數字}, {"intent":"record",...}]
+只有一筆消費時，直接回傳單一物件，不要包陣列，也不要在物件外多加任何文字或換行。
+
+【查詢輸出格式】
+{"intent":"query","start_date":"YYYY-MM-DD","end_date":"YYYY-MM-DD"}
+
+【分類清單（只能選這26個）】
+餐飲、飲料咖啡、大眾交通、油資、停車費、計程車Uber、購物雜貨、服飾、租金、水電瓦斯、電話網路費、3C電器、訂閱服務、醫療藥品、美容美髮、健身運動、娛樂、旅遊住宿、教育學習、書籍文具、保險、投資理財、孝親費、禮金紅包、寵物、其他
+
+【規則】
+多筆記帳時，每一筆的 date 各自依照該筆輸入內提到的日期計算（例如「6/1」表示今天日期所在年份的 06-01）；某筆沒提到日期才用輸入中的今天日期；time 未提及直接用輸入中的現在時間；查詢的日期區間依「本週/上週/本月/昨天」等自行計算；支出正數；只輸出純JSON</pre>
+      </div>
+
+      <div class="callout why">
+        <div class="callout-title">💡 為什麼設計成「一個 Prompt 判斷兩種意圖」？</div>
+        <p>
+          讓同一個 AI Agent 同時處理「記帳」和「查詢」兩種需求，靠關鍵字（花多少、本週、上個月...）區分意圖，
+          可以讓用戶在同一個聊天視窗用自然語言操作，不用記指令。輸出固定 JSON 格式，方便後續 Code 節點直接 <code>JSON.parse()</code>。
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════ gemini-chat-model ══════════ -->
+    <section class="node-panel-content" data-node="gemini-chat-model" hidden>
+      <p class="section-sub">這是 AI Agent 節點底下掛載的「語言模型」子節點，負責實際呼叫 Gemini，理解 AI Agent 的 Prompt 與 System Message。</p>
+
+      <table class="settings">
+        <tr><td>節點類型</td><td><code>Google Gemini Chat Model</code></td></tr>
+        <tr><td>Credential</td><td>Google Gemini(PaLM) Api（0-3 建立的「LINE記帳」憑證）</td></tr>
+        <tr><td>Model</td><td><code>models/gemini-3.1-flash-lite</code></td></tr>
+      </table>
+
+      <div class="callout tip">
+        <div class="callout-title">💡 為什麼選 <code class="inline">gemini-3.1-flash-lite</code>？</div>
+        <p>
+          <code class="inline">gemini-2.5-flash</code> 太熱門，常遇到 <code class="inline">503 UNAVAILABLE（high demand）</code>。
+          記帳這種簡單分類任務不需要最強模型，<code class="inline">gemini-3.1-flash-lite</code> 負載較低、回應更快。
+          這個模型設定要跟「AI Agent」節點裡選的一致。
+        </p>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-title">📌 怎麼接線？</div>
+        <p>
+          在 n8n 畫布上拖出這個節點後，會自動出現一條<strong>虛線</strong>連到 AI Agent 節點下方的
+          <code class="inline">Chat Model</code> 插槽——這條虛線跟一般「主要流程」的實線不同，
+          代表「子節點提供能力給上層節點」，而不是資料流的順序。
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════ clean-text ══════════ -->
+    <section class="node-panel-content" data-node="clean-text" hidden>
+      <p class="section-sub">放在 AI Agent → If 之間。Gemini 有時仍會在 JSON 外層加上 markdown code fences（```json ... ```），這個節點統一清除。</p>
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">JavaScript — 清理文字輸出</span>
+          <button class="copy-btn" data-label="複製">複製</button>
+        </div>
+        <pre>const raw = $json.output;
+const cleaned = raw.replace(/```json\n?|\n?```/g, '').trim();
+return [{ json: { output: cleaned } }];</pre>
+      </div>
+    </section>
+
+    <!-- ══════════ to-base64 ══════════ -->
+    <section class="node-panel-content" data-node="to-base64" hidden>
+      <p class="section-sub">圖片路徑不走 AI Agent，改用 HTTP Request 直接呼叫 Gemini API，確保圖片能正確傳入。這是圖片路徑的第一個 Code 節點。</p>
+
+      <div class="shot">
+        <div class="frame">
+          <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+          <img src="assets/n8n-image-path-overview.png" alt="圖片路徑全貌" />
+        </div>
+        <div class="caption">圖片路徑全貌：取得圖片 → 轉base64 Code → 組合Gemini請求 Code → HTTP Request（Gemini）→ 解析 Code。</div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">JavaScript — 轉 base64</span>
+          <button class="copy-btn" data-label="複製">複製</button>
+        </div>
+        <pre>const binaryData = $input.first().binary.data;
+const base64 = binaryData.data;
+
+return [{
+  json: {
+    imageBase64: base64,
+    mimeType: binaryData.mimeType || 'image/jpeg'
+  }
+}];</pre>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-title">💡 為什麼要寫 <code class="inline">$input.first().binary.data</code>？</div>
+        <p>
+          因為圖片本身不是放在一般的 <code class="inline">json</code> 欄位裡，而是放在「上一個節點（取得圖片）」傳過來的
+          <strong>binary（二進位）資料</strong>裡。這樣寫，就是去拿「上一個節點傳來的第一筆資料」裡面的圖片內容，
+          再轉成 base64 格式給 Gemini 使用。
+        </p>
+      </div>
+
+      <div class="shot">
+        <div class="frame">
+          <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+          <img src="assets/n8n-base64-code.png" alt="轉base64 Code 節點" />
+        </div>
+        <div class="caption">轉base64 Code 節點：從 $input.first().binary.data 取出 base64 與 mimeType。</div>
+      </div>
+    </section>
+
+    <!-- ══════════ build-gemini-request ══════════ -->
+    <section class="node-panel-content" data-node="build-gemini-request" hidden>
+      <p class="section-sub">
+        放在「轉base64」和「Gemini Vision」之間，<strong>用 JavaScript 把整個請求內容組成一個物件</strong>，
+        而不是在 HTTP Request 節點裡手寫一大段 JSON 文字。
+      </p>
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">JavaScript — 組合Gemini請求</span>
+          <button class="copy-btn" data-label="複製">複製</button>
+        </div>
+        <pre>const data = $input.first().json;
+
+const prompt = `你是一個記帳助理。分析圖片中的發票或收據，回傳標準 JSON，不得有多餘文字或 markdown。
+
+輸出格式：
+{"intent":"record","date":"YYYY-MM-DD","time":"HH:mm","category":"從清單選一","description":"品項","amount":數字}
+
+分類清單：餐飲、飲料咖啡、大眾交通、油資、停車費、計程車Uber、購物雜貨、服飾、租金、水電瓦斯、電話網路費、3C電器、訂閱服務、醫療藥品、美容美髮、健身運動、娛樂、旅遊住宿、教育學習、書籍文具、保險、投資理財、孝親費、禮金紅包、寵物、其他
+
+規則：識別總金額，date用今天台北時間，支出正數，只輸出純JSON`;
+
+return [{
+  json: {
+    requestBody: {
+      contents: [{
+        parts: [
+          { text: prompt },
+          {
+            inline_data: {
+              mime_type: data.mimeType,
+              data: data.imageBase64
+            }
+          }
+        ]
+      }]
+    }
+  }
+}];</pre>
+      </div>
+
+      <div class="callout why">
+        <div class="callout-title">💡 為什麼改用 Code 節點組請求，而不是在 HTTP Request 裡寫 JSON？</div>
+        <p>
+          這個 prompt 很長、含有 26 個分類、換行與 JSON 範例，不管寫成「純 JSON 文字＋<code class="inline">{{ }}</code>」
+          還是「整段包成一個 <code class="inline">{{ {...} }}</code> 表達式」，都很容易因為跳脫字元或編輯器排版
+          而出現 <code class="inline">JSON parameter needs to be valid JSON</code> 或 <code class="inline">invalid syntax</code>。
+          <br /><br />
+          改用 Code 節點後，prompt 是一段普通的 JavaScript <strong>樣板字串（用反引號 <code class="inline">` `</code>）</strong>，
+          想換行就直接按 Enter，想用雙引號 <code class="inline">"</code> 也完全不用跳脫——JavaScript 引擎會幫你正確處理所有字元。
+          最後組成的 <code class="inline">requestBody</code> 是一個物件，交給下一個節點直接使用，n8n 不需要再做任何 JSON 文字解析。
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════ gemini-vision ══════════ -->
+    <section class="node-panel-content" data-node="gemini-vision" hidden>
+      <p class="section-sub">直接呼叫 Gemini 原生 API（generateContent + inline_data），把組好的 requestBody 送出去。</p>
+
+      <table class="settings">
+        <tr><td>節點名稱</td><td><code>Gemini Vision</code></td></tr>
+        <tr><td>Method</td><td><code>POST</code></td></tr>
+        <tr><td>URL</td><td><code>https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent</code></td></tr>
+        <tr><td>Authentication</td><td><code>Generic Credential Type</code> → <code>Query Auth</code></td></tr>
+        <tr><td>Query Auth</td><td>Name: <code>key</code>　Value: 【你的 Gemini API Key】 <button class="inline-copy" data-field="geminiKey" title="複製我的 API Key">📋</button></td></tr>
+        <tr><td>Body Content Type</td><td><code>JSON</code>，Send Body 開啟</td></tr>
+        <tr><td>Specify Body</td><td><code>Using JSON</code></td></tr>
+      </table>
+
+      <div class="shot">
+        <div class="frame">
+          <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+          <img src="assets/n8n-query-auth-credential.png" alt="Query Auth 憑證設定" />
+        </div>
+        <div class="caption">Query Auth 憑證：Name = key，Value = Gemini API Key。</div>
+      </div>
+
+      <p class="muted">Body 欄位整個只填一個表達式：</p>
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">表達式</span>
+          <button class="copy-btn" data-label="複製">複製</button>
+        </div>
+        <pre>{{ $json.requestBody }}</pre>
+      </div>
+
+      <div class="shot">
+        <div class="frame">
+          <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+          <img src="assets/n8n-gemini-vision-body.png" alt="HTTP Request Body 設定" />
+        </div>
+        <div class="caption">HTTP Request 節點：Send Body 開啟，JSON 格式，Body 欄位只填 {{ $json.requestBody }}。</div>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-title">💡 為什麼要開啟 Retry On Fail？</div>
+        <p>
+          Gemini 伺服器偶爾會「當下太忙」，回應失敗一次，但通常等個一兩秒再試就會成功。
+          所以這個節點在 <strong>Settings</strong> 分頁裡開啟了 <strong>Retry On Fail</strong>，
+          設定 <strong>Max Tries</strong> = <code class="inline">3</code>、
+          <strong>Wait Between Tries</strong> = <code class="inline">2000</code>（毫秒），
+          讓 n8n 自動重試，不用自己手動重新執行整個流程。
+        </p>
+      </div>
+
+      <div class="callout why">
+        <div class="callout-title">💡 為什麼圖片路徑不直接用 AI Agent 節點？</div>
+        <p>
+          AI Agent 節點對圖片輸入的支援在某些 n8n 版本不夠穩定，直接打 Gemini 原生 API
+          （<code>generateContent</code> + <code>inline_data</code>）更可控、更可靠，能確保圖片資料正確送達並取得結構化回應。
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════ parse-gemini ══════════ -->
+    <section class="node-panel-content" data-node="parse-gemini" hidden>
+      <p class="section-sub">把 Gemini Vision 回傳的原始 JSON，取出文字內容並清除 markdown，輸出格式與文字路徑一致。</p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">JavaScript — 解析回傳（Code in JavaScript1）</span>
+          <button class="copy-btn" data-label="複製">複製</button>
+        </div>
+        <pre>const response = $json.candidates[0].content.parts[0].text;
+const cleaned = response.replace(/```json\n?|\n?```/g, '').trim();
+return [{ json: { output: cleaned } }];</pre>
+      </div>
+      <div class="shot">
+        <div class="frame">
+          <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+          <img src="assets/n8n-parse-gemini-code.png" alt="解析 Gemini 回傳 Code" />
+        </div>
+        <div class="caption">解析 Gemini 回傳：取出 candidates[0].content.parts[0].text，清除 markdown，輸出 output 欄位。</div>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-title">📌 與文字路徑會合</div>
+        <p>圖片路徑最終也輸出 <code class="inline">{ output: "{...json...}" }</code>，與文字路徑（AI Agent）的輸出格式一致，兩條線都接到同一個 If 節點。</p>
+      </div>
+    </section>
+
+    <!-- ══════════ if-node ══════════ -->
+    <section class="node-panel-content" data-node="if-node" hidden>
+      <p class="section-sub">兩條路徑（文字、圖片）合流後，依 AI 判斷的 intent 決定走「記帳」還是「查詢」。</p>
+
+      <table class="settings">
+        <tr><td>Value 1</td><td><code>{{ (Array.isArray(JSON.parse($json.output)) ? JSON.parse($json.output)[0] : JSON.parse($json.output)).intent }}</code></td></tr>
+        <tr><td>Operation</td><td><code>is equal to</code></td></tr>
+        <tr><td>Value 2</td><td><code>record</code></td></tr>
+        <tr><td>True</td><td>記帳路徑（接 處理記帳）</td></tr>
+        <tr><td>False</td><td>查詢路徑（接 讀取Sheet → 處理查詢）</td></tr>
+      </table>
+
+      <div class="shot">
+        <div class="frame">
+          <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+          <img src="assets/n8n-if-node.png" alt="If 節點設定" />
+        </div>
+        <div class="caption">If 節點：判斷 JSON.parse(output).intent 是否等於 "record"。</div>
+      </div>
+
+      <div class="callout why">
+        <div class="callout-title">💡 為什麼用 is equal to，而且要 JSON.parse？</div>
+        <p>
+          <code>output</code> 欄位裡存的是「字串形式的 JSON」（例如 <code>'{"intent":"record",...}'</code>），
+          要先用 <code>JSON.parse()</code> 轉成物件才能取出 <code>intent</code> 欄位。
+          而 intent 的值只會是精確的 <code>"record"</code> 或 <code>"query"</code>，所以用 <strong>is equal to</strong> 做精確比對。
+        </p>
+      </div>
+
+      <div class="callout why">
+        <div class="callout-title">💡 為什麼要先判斷是「單筆」還是「陣列」？</div>
+        <p>
+          使用者可能一次輸入好幾筆消費（例如「咖啡50 早餐100」），這種情況下 AI 會回傳一個<strong>陣列</strong>
+          <code class="inline">[{...}, {...}]</code>，裡面包含好幾筆記帳資料；如果只輸入一筆，AI 就只會回傳<strong>一個物件</strong>。
+          所以這裡會先用 <code class="inline">JSON.parse(output)</code> 判斷是不是陣列，是的話就看第一筆 <code class="inline">[0]</code> 的
+          <code class="inline">intent</code>，這樣不管使用者一次輸入幾筆消費，都能正確判斷是「記帳」還是「查詢」。
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════ get-rows ══════════ -->
+    <section class="node-panel-content" data-node="get-rows" hidden>
+      <p class="section-sub">查詢消費統計需要讀取所有歷史紀錄，記帳路徑則不需要這個節點。</p>
+
+      <table class="settings">
+        <tr><td>節點類型</td><td><code>Google Sheets → Get row(s) in sheet</code></td></tr>
+        <tr><td>Credential</td><td>Google Sheets account（0-2 建立的憑證）</td></tr>
+        <tr><td>Resource</td><td><code>Sheet Within Document</code></td></tr>
+        <tr><td>Operation</td><td><code>Get Row(s)</code></td></tr>
+        <tr><td>Document</td><td><code>LINE記帳</code></td></tr>
+        <tr><td>Sheet</td><td><code>records</code></td></tr>
+        <tr><td>Filters</td><td>留空（= 讀取全部 rows）</td></tr>
+      </table>
+
+      <div class="shot">
+        <div class="frame">
+          <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+          <img src="assets/n8n-get-rows-node.png" alt="讀取 Sheet 設定" />
+        </div>
+        <div class="caption">讀取 Sheet：Document = LINE記帳，Sheet = records，Filters 留空讀取全部。</div>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-title">📌 Filters 留空 = 全部資料</div>
+        <p>不需要額外開啟「Return All」，Filters 不填就會自動返回所有資料列，後續 Code 節點再用 JavaScript 篩選日期區間。</p>
+      </div>
+    </section>
+
+    <!-- ══════════ handle-record ══════════ -->
+    <section class="node-panel-content" data-node="handle-record" hidden>
+      <p class="section-sub">把 AI 輸出的記帳 JSON，整理成「寫入 Sheet」與「回覆 LINE」需要的格式。</p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">JavaScript — 處理記帳</span>
+          <button class="copy-btn" data-label="複製">複製</button>
+        </div>
+        <pre>const emoji = {
+  '餐飲':'🍱','飲料咖啡':'☕','大眾交通':'🚌','油資':'⛽',
+  '停車費':'🅿️','計程車Uber':'🚕','購物雜貨':'🛒','服飾':'👗',
+  '租金':'🏠','水電瓦斯':'💡','電話網路費':'📱','3C電器':'💻',
+  '訂閱服務':'📺','醫療藥品':'💊','美容美髮':'💇','健身運動':'🏃',
+  '娛樂':'🎮','旅遊住宿':'✈️','教育學習':'📚','書籍文具':'📖',
+  '保險':'🛡️','投資理財':'📈','孝親費':'👨‍👩‍👧','禮金紅包':'🧧',
+  '寵物':'🐾','其他':'📦'
+};
+
+const parsed = JSON.parse($('If').item.json.output);
+const items = Array.isArray(parsed) ? parsed : [parsed];
+const userId = $('Webhook').item.json.body.events[0].source.userId;
+
+const rows = items.map(ai => [ai.date, ai.time, ai.category, ai.description, ai.amount]);
+const total = items.reduce((sum, ai) => sum + Number(ai.amount), 0);
+
+const reply = items.length === 1
+  ? (() => {
+      const ai = items[0];
+      const icon = emoji[ai.category] || '📦';
+      return `✅ 記帳完成！\n📅 ${ai.date} ${ai.time}\n${icon} ${ai.category}｜${ai.description}　$${Number(ai.amount).toLocaleString()}`;
+    })()
+  : (() => {
+      const lines = items.map(ai => {
+        const d = ai.date.slice(5).replace('-', '/');
+        const icon = emoji[ai.category] || '📦';
+        return `${d}  ${icon} ${ai.description}　$${Number(ai.amount).toLocaleString()}`;
+      });
+      return `✅ 記帳完成！共 ${items.length} 筆\n${lines.join('\n')}\n──────────\n💰 合計　$${Number(total).toLocaleString()}`;
+    })();
+
+return [{ json: {
+  rows,
+  reply,
+  userId
+} }];</pre>
+      </div>
+
+      <div class="shot">
+        <div class="frame">
+          <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+          <img src="assets/n8n-handle-record-code.png" alt="處理記帳 Code 節點" />
+        </div>
+        <div class="caption">處理記帳 Code 節點，支援單筆與多筆消費，輸出 rows / reply / userId 供後續節點使用。</div>
+      </div>
+
+      <h3>輸出欄位說明</h3>
+      <table class="settings">
+        <tr><td><code>rows</code></td><td>二維陣列 <code>[[val1, val2, ...], ...]</code>，一筆消費一列，符合 Google Sheets API 的 <code>values</code> 格式</td></tr>
+        <tr><td><code>reply</code></td><td>含 <code>\n</code> 換行符的回覆訊息，由後續 Code 節點的 <code>JSON.stringify</code> 自動正確序列化；多筆消費時會列出每一筆並附上合計</td></tr>
+        <tr><td><code>userId</code></td><td>LINE 用戶 ID，Push Message 指定收件人用</td></tr>
+      </table>
+
+      <div class="callout why">
+        <div class="callout-title">💡 為什麼 <code class="inline">rows</code> 要設計成「扁平陣列」？</div>
+        <p>
+          Google Sheets 新增資料列時，需要的格式就是「一列一個陣列」，例如
+          <code class="inline">[日期, 時間, 分類, 描述, 金額]</code>。把資料整理成這種扁平陣列，
+          後面「寫入 Sheet」節點就能直接拿來用，不用再多一層轉換。
+        </p>
+      </div>
+
+      <div class="callout why">
+        <div class="callout-title">💡 為什麼多筆消費時，每一行都要顯示自己的日期？</div>
+        <p>
+          如果使用者一次輸入好幾筆不同天的消費（例如「6/1出去玩1200、6/2買手機30000」），
+          每一筆其實是<strong>不同日期</strong>的紀錄。所以回覆訊息在多筆時，會讓<strong>每一行都顯示自己的 <code class="inline">MM/DD</code></strong>，
+          最後再加總總金額，這樣使用者一眼就能看出每一筆分別是哪天花的。
+        </p>
+      </div>
+
+      <div class="callout why">
+        <div class="callout-title">💡 為什麼分類用「一個表情符號」表示，而不是文字？</div>
+        <p>
+          LINE 的訊息框寬度有限，如果分類用文字（例如「旅遊住宿」）再加上金額，整行會太長，
+          在手機上容易被截斷換行，金額看起來就會跑到下一行、整體很亂。
+          改用<strong>單一表情符號</strong>代表分類（例如 ✈️ 代表旅遊住宿），可以讓每一行大幅縮短，
+          大部分情況下都能在一行內顯示完整，閱讀起來更整齊。
+        </p>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-title">📌 為什麼先把 <code class="inline">parsed</code> 統一包成陣列？</div>
+        <p>
+          <code class="inline">JSON.parse($('If').item.json.output)</code> 可能是「單一物件」（一筆消費），
+          也可能是「陣列」（使用者一次輸入多筆消費時）。
+          用 <code class="inline">items = Array.isArray(parsed) ? parsed : [parsed]</code> 統一轉成陣列後，
+          後面的程式碼（算 <code class="inline">rows</code>、算合計、組 <code class="inline">reply</code>）就只需要寫一套，
+          不用為「單筆」和「多筆」各寫一份。
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════ handle-query ══════════ -->
+    <section class="node-panel-content" data-node="handle-query" hidden>
+      <p class="section-sub">依 AI 給的日期區間篩選紀錄，按分類統計加總，組成漂亮的分析報告文字。</p>
+
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">JavaScript — 處理查詢</span>
+          <button class="copy-btn" data-label="複製">複製</button>
+        </div>
+        <pre>const ai = JSON.parse($('If').item.json.output);
+const records = $input.all().map(i => i.json);
+const userId = $('Webhook').item.json.body.events[0].source.userId;
+
+const start = ai.start_date;
+const end = ai.end_date;
+const filtered = records.filter(r => r.date >= start && r.date <= end);
+
+if (filtered.length === 0) {
+  const s = start.slice(5).replace('-','/');
+  const e = end.slice(5).replace('-','/');
+  return [{ json: { reply: `📭 ${s}～${e} 沒有消費紀錄`, userId } }];
+}
+
+const byCategory = {};
+filtered.forEach(r => {
+  byCategory[r.category] = (byCategory[r.category] || 0) + Number(r.amount);
+});
+
+const total = filtered.reduce((sum, r) => sum + Number(r.amount), 0);
+
+const emoji = {
+  '餐飲':'🍱','飲料咖啡':'☕','大眾交通':'🚌','油資':'⛽',
+  '停車費':'🅿️','計程車Uber':'🚕','購物雜貨':'🛒','服飾':'👗',
+  '租金':'🏠','水電瓦斯':'💡','電話網路費':'📱','3C電器':'💻',
+  '訂閱服務':'📺','醫療藥品':'💊','美容美髮':'💇','健身運動':'🏃',
+  '娛樂':'🎮','旅遊住宿':'✈️','教育學習':'📚','書籍文具':'📖',
+  '保險':'🛡️','投資理財':'📈','孝親費':'👨‍👩‍👧','禮金紅包':'🧧',
+  '寵物':'🐾','其他':'📦'
+};
+
+const lines = Object.entries(byCategory)
+  .sort((a, b) => b[1] - a[1])
+  .map(([cat, amt]) => {
+    const pct = Math.round(amt / total * 100);
+    const icon = emoji[cat] || '📦';
+    return `${icon} ${cat}　$${Number(amt).toLocaleString()}　${pct}%`;
+  });
+
+const s = start.slice(5).replace('-','/');
+const e = end.slice(5).replace('-','/');
+
+const reply = [
+  `📊 消費分析（${s}～${e}）`,
+  '───────────────────',
+  ...lines,
+  '───────────────────',
+  `💰 合計  $${Number(total).toLocaleString()}｜共 ${filtered.length} 筆`
+].join('\n');
+
+return [{ json: { reply, userId } }];</pre>
+      </div>
+
+      <div class="shot">
+        <div class="frame">
+          <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+          <img src="assets/n8n-handle-query-code.png" alt="處理查詢 Code 節點" />
+        </div>
+        <div class="caption">處理查詢 Code 節點：篩選日期區間、分類加總、依金額排序並計算百分比。</div>
+      </div>
+
+      <div class="shot">
+        <div class="frame">
+          <div class="frame-bar"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></div>
+          <img src="assets/n8n-workflow-overview.png" alt="整體 Workflow 架構" />
+        </div>
+        <div class="caption">整體 Workflow 架構：記帳路徑在上方、查詢路徑在下方，AI Agent / 圖片解析都需連到 If 節點。</div>
+      </div>
+
+      <h3>支援的查詢語法</h3>
+      <ul class="clean">
+        <li>自然語言：<code class="inline">今天</code> <code class="inline">昨天</code> <code class="inline">本週</code> <code class="inline">上週</code> <code class="inline">本月</code> <code class="inline">上個月</code> <code class="inline">最近7天</code></li>
+        <li>自訂區間：<code class="inline">1/1~3/10</code>（同年）、<code class="inline">2025/12/1~2026/1/31</code>（跨年）</li>
+      </ul>
+
+      <h3>回覆格式預覽</h3>
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">範例輸出</span>
+          <button class="copy-btn" data-label="複製">複製</button>
+        </div>
+        <pre>📊 消費分析（6/2～6/9）
+───────────────────
+🍱 餐飲　$2,450　42%
+🛒 購物雜貨　$1,200　21%
+🚌 大眾交通　$890　15%
+☕ 飲料咖啡　$380　7%
+───────────────────
+💰 合計  $4,920｜共 12 筆</pre>
+      </div>
+    </section>
+
+    <!-- ══════════ write-sheet ══════════ -->
+    <section class="node-panel-content" data-node="write-sheet" hidden>
+      <p class="section-sub">不用 n8n 內建的 Append Row 節點，改直接打 Google Sheets API。</p>
+
+      <div class="callout warn">
+        <div class="callout-title">⚠️ 為什麼不用 Append Row 節點？</div>
+        <p>
+          n8n v1.123.5 的 Google Sheets <strong>Append Row</strong> 節點，欄位值的表達式（<code>{{ $json.date }}</code> 等）
+          無法正確解析，會把表達式原文寫入 Sheet，而不是實際值。改用 <strong>HTTP Request 直接呼叫 Google Sheets API</strong>，
+          Body 用物件表達式語法 <code>{{ {...} }}</code> 即可正確序列化。
+        </p>
+      </div>
+
+      <table class="settings">
+        <tr><td>節點名稱</td><td><code>HTTP Request1</code></td></tr>
+        <tr><td>類型</td><td><code>HTTP Request</code></td></tr>
+        <tr><td>Method</td><td><code>POST</code></td></tr>
+        <tr><td>Authentication</td><td><code>Predefined Credential Type</code> → <code>Google Sheets OAuth2 API</code></td></tr>
+        <tr><td>選擇憑證</td><td>選你在 0-2 步驟建立好的那組 Google Sheets 憑證（下拉選單裡選就好，名字是你自己取的）</td></tr>
+        <tr><td>Body Content Type</td><td><code>JSON</code>，Specify Body: <code>Using JSON</code></td></tr>
+      </table>
+
+      <p class="muted">URL：</p>
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">URL</span>
+          <button class="copy-btn" data-label="複製">複製</button>
+        </div>
+        <pre>https://sheets.googleapis.com/v4/spreadsheets/【你的試算表ID】/values/records!A:E:append?valueInputOption=USER_ENTERED</pre>
+      </div>
+
+      <p class="muted">JSON Body：</p>
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">表達式</span>
+          <button class="copy-btn" data-label="複製">複製</button>
+        </div>
+        <pre>{{ {"values": $json.rows} }}</pre>
+      </div>
+
+      <div class="callout token">
+        <div class="callout-title">🔑 【你的試算表ID】從哪裡取得？</div>
+        <p>從 Google Sheets 網址取得：<code class="inline">https://docs.google.com/spreadsheets/d/【這段就是ID】/edit</code></p>
+      </div>
+
+      <div class="callout why">
+        <div class="callout-title">💡 為什麼 Body 要用 <code>{{ {"values": $json.rows} }}</code> 而不是字串？</div>
+        <p>
+          這個表達式回傳的是一個 <strong>JavaScript 物件</strong>，n8n 會自動正確序列化成 JSON。
+          如果改成手寫字串模板（例如 <code>{"values": [["{{ $json.date }}", ...]]}</code>），
+          遇到含特殊字元或換行的欄位值就容易產生「JSON parameter needs to be valid JSON」錯誤。
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════ send-line-record ══════════ -->
+    <section class="node-panel-content" data-node="send-line-record" hidden>
+      <p class="section-sub">用 Code 節點呼叫 LINE Push Message API，把記帳結果回傳給用戶。</p>
+
+      <div class="callout warn">
+        <div class="callout-title">⚠️ 為什麼用 Code 節點而不是 HTTP Request 節點？</div>
+        <p>
+          n8n 的 HTTP Request 節點在 JSON body 模板中，無法正確處理含 <code>\n</code> 換行字元的表達式
+          （<code>reply</code> 內容含換行符），會出現「JSON parameter needs to be valid JSON」錯誤。
+          改用 Code 節點的 <code>this.helpers.httpRequest()</code>，讓 JavaScript 原生處理 JSON 序列化，問題就解決了。
+        </p>
+      </div>
+
+      <table class="settings">
+        <tr><td>節點名稱</td><td><code>送出LINE</code></td></tr>
+        <tr><td>類型</td><td><code>Code（JavaScript）</code></td></tr>
+        <tr><td>Mode</td><td><code>Run Once for All Items</code></td></tr>
+      </table>
+
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">JavaScript — 送出LINE</span>
+          <button class="copy-btn" data-label="複製">複製</button>
+        </div>
+        <pre>const data = $('處理記帳').first().json;
+
+const TOKEN = '【LINE Channel Access Token】';
+
+await this.helpers.httpRequest({
+  method: 'POST',
+  url: 'https://api.line.me/v2/bot/message/push',
+  headers: {
+    'Authorization': `Bearer ${TOKEN}`,
+    'Content-Type': 'application/json'
+  },
+  body: {
+    to: data.userId,
+    messages: [{ type: 'text', text: data.reply }]
+  }
+});
+
+return [{ json: { sent: true } }];</pre>
+      </div>
+
+      <div class="callout token">
+        <div class="callout-title">🔑 【LINE Channel Access Token】去哪裡拿？</div>
+        <p>
+          LINE Developers Console → 你的 Channel → <strong>Messaging API</strong> 分頁 → 最下方 <strong>Channel access token</strong> → 點 Issue（或複製已有的）。
+          <br />⚠️ 這個 Token 跟 Gemini API Key 完全不同，也跟 Google OAuth 無關，更不是 LINE Login Channel 的 Channel Secret。
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════ send-line-query ══════════ -->
+    <section class="node-panel-content" data-node="send-line-query" hidden>
+      <p class="section-sub">與「送出LINE」完全相同做法，用 Code 節點呼叫 LINE Push Message API，把查詢分析結果回傳給用戶。</p>
+
+      <table class="settings">
+        <tr><td>節點名稱</td><td><code>送出LINE1</code></td></tr>
+        <tr><td>類型</td><td><code>Code（JavaScript）</code></td></tr>
+        <tr><td>Mode</td><td><code>Run Once for All Items</code></td></tr>
+      </table>
+
+      <p class="muted">與「送出LINE」完全相同做法，只有第一行改抓 <code class="inline">$('處理查詢')</code>：</p>
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">JavaScript — 送出LINE1</span>
+          <button class="copy-btn" data-label="複製">複製</button>
+        </div>
+        <pre>const data = $('處理查詢').first().json;
+
+const TOKEN = '【LINE Channel Access Token】';
+
+await this.helpers.httpRequest({
+  method: 'POST',
+  url: 'https://api.line.me/v2/bot/message/push',
+  headers: {
+    'Authorization': `Bearer ${TOKEN}`,
+    'Content-Type': 'application/json'
+  },
+  body: {
+    to: data.userId,
+    messages: [{ type: 'text', text: data.reply }]
+  }
+});
+
+return [{ json: { sent: true } }];</pre>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-title">📌 教學技巧：複製節點比重新建快</div>
+        <p>建好「送出LINE」後，直接複製貼上成「送出LINE1」，只改第一行的節點名稱即可，比重新拖拉設定快很多。</p>
+      </div>
+
+      <div class="callout token">
+        <div class="callout-title">🔑 【LINE Channel Access Token】去哪裡拿？</div>
+        <p>
+          LINE Developers Console → 你的 Channel → <strong>Messaging API</strong> 分頁 → 最下方 <strong>Channel access token</strong> → 點 Issue（或複製已有的）。
+          <br />⚠️ 這個 Token 跟 Gemini API Key 完全不同，也跟 Google OAuth 無關，更不是 LINE Login Channel 的 Channel Secret。
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════ gemma4 ══════════ -->
+    <section class="node-panel-content" data-node="gemma4" hidden>
+      <p class="section-sub">這是 workflow 裡一個「孤兒」節點——沒有任何連線連到它，也不影響任何流程。</p>
+
+      <table class="settings">
+        <tr><td>節點類型</td><td><code>OpenAI Chat Model</code>（指向 Gemma 模型）</td></tr>
+        <tr><td>連線狀態</td><td>⚠️ 完全未連接到任何節點</td></tr>
+        <tr><td>建議動作</td><td>可以直接在 n8n 畫布上選取後刪除</td></tr>
+      </table>
+
+      <div class="callout tip">
+        <div class="callout-title">📌 為什麼會留下這個節點？</div>
+        <p>
+          這通常是早期測試「換一個語言模型」時拖出來的子節點，後來改用 Google Gemini Chat Model
+          但忘記刪除。它不會被執行、也不會消耗任何額度，純粹是畫布上的雜物。
+        </p>
+      </div>
+
+      <div class="callout why">
+        <div class="callout-title">💡 怎麼確認它真的可以刪？</div>
+        <p>
+          在 n8n 畫布上檢查這個節點四周——如果沒有任何線（實線或虛線）連到它，
+          代表它不屬於 <code class="inline">connections</code> 設定的一部分，刪除後不會影響 webhook、
+          AI Agent 或任何其他節點的運作。刪除前如果不放心，也可以先停用（disable）觀察一陣子。
+        </p>
+      </div>
+    </section>
+
+  </div>
+  <div class="node-panel-foot">
+    <div class="node-nav-group prev"></div>
+    <div class="node-nav-group next"></div>
+  </div>
+</div>
+
+<!-- ════════════ 圖片放大 Lightbox ════════════ -->
+<div class="lightbox-overlay">
+  <button class="lightbox-close" title="關閉">×</button>
+  <img class="lightbox-img" src="" alt="放大檢視" />
+</div>
+
+<!-- ════════════ 我的資料 ════════════ -->
+<button class="vault-btn" title="我的資料">📝 我的資料</button>
+<div class="vault-overlay"></div>
+<div class="vault-modal">
+  <div class="vault-head">
+    <h3>📝 我的資料</h3>
+    <button class="vault-close" title="關閉">×</button>
+  </div>
+  <p class="vault-desc">
+    把下面 4 樣東西填好，存在「這台電腦」裡（不會上傳）。
+    之後看到 <span class="vault-demo-btn">📋</span> 按鈕，按一下就會直接貼上你自己的資料，不用再到處找。
+  </p>
+
+  <div class="vault-example">
+    <div class="vault-example-row">
+      <span class="vault-example-tag">教學上會看到</span>
+      <code>const TOKEN = '【LINE Channel Access Token】'; <span class="vault-demo-btn">📋</span></code>
+    </div>
+    <div class="vault-example-arrow">↓ 填好①之後，按 📋 複製，貼到 n8n 會自動變成</div>
+    <div class="vault-example-row">
+      <span class="vault-example-tag">貼到 n8n 後</span>
+      <code>const TOKEN = '<span class="vault-example-fill">你剛剛填的那串金鑰</span>';</code>
+    </div>
+  </div>
+  <div class="vault-field">
+    <label for="vault-lineToken">① LINE 的金鑰<span class="vault-hint">（Channel Access Token）</span></label>
+    <div class="vault-row">
+      <input type="text" id="vault-lineToken" data-vault-field="lineToken" placeholder="貼在這裡" autocomplete="off" />
+      <button class="inline-copy" data-field="lineToken" title="複製">📋</button>
+    </div>
+  </div>
+  <div class="vault-field">
+    <label for="vault-spreadsheetId">② 記帳試算表的 ID<span class="vault-hint">（網址 /d/ 後面那一段）</span></label>
+    <div class="vault-row">
+      <input type="text" id="vault-spreadsheetId" data-vault-field="spreadsheetId" placeholder="貼在這裡" autocomplete="off" />
+      <button class="inline-copy" data-field="spreadsheetId" title="複製">📋</button>
+    </div>
+  </div>
+  <div class="vault-field">
+    <label for="vault-n8nUrl">③ 你的 n8n 網址<span class="vault-hint">（不用加 https://）</span></label>
+    <div class="vault-row">
+      <input type="text" id="vault-n8nUrl" data-vault-field="n8nUrl" placeholder="例如 your-instance.app.n8n.cloud" autocomplete="off" />
+      <button class="inline-copy" data-field="n8nUrl" title="複製">📋</button>
+    </div>
+  </div>
+  <div class="vault-field">
+    <label for="vault-geminiKey">④ Gemini 的金鑰<span class="vault-hint">（API Key）</span></label>
+    <div class="vault-row">
+      <input type="text" id="vault-geminiKey" data-vault-field="geminiKey" placeholder="貼在這裡" autocomplete="off" />
+      <button class="inline-copy" data-field="geminiKey" title="複製">📋</button>
+    </div>
+  </div>
+  <div class="vault-foot">
+    <span class="vault-saved-hint">✓ 已自動儲存</span>
+    <button class="vault-clear">清除全部</button>
+  </div>
+</div>
+
+<!-- ════════════ 提示訊息（toast）════════════ -->
+<div class="toast"></div>
+
+<button class="scroll-top" title="回到頂部">↑</button>
+<script src="diagram-data.js"></script>
+<script src="diagram.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
