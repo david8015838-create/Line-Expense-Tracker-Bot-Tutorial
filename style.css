@@ -129,6 +129,10 @@ body {
 }
 
 @media (max-width: 900px) {
+  .layout {
+    flex-direction: column;
+  }
+
   .sidebar {
     width: 100%;
     height: auto;

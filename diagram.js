@@ -132,8 +132,22 @@
     applyTransform();
   }
 
+  // 非全螢幕時，把畫布往右延伸到視窗邊緣（利用 .main 右側的留白），
+  // 讓節點的縮放比例盡量接近全螢幕模式，文字才看得清楚
+  function updateWrapWidth() {
+    if (wrap.classList.contains('fullscreen')) {
+      wrap.style.width = '';
+      return;
+    }
+    if (wrap.offsetParent === null) return; // 畫面尚未顯示（display:none），先不計算
+    const rect = wrap.getBoundingClientRect();
+    const target = Math.max(rect.width, window.innerWidth - rect.left - 24);
+    wrap.style.width = Math.round(target) + 'px';
+  }
+
   function fitToScreen() {
     const padding = 24;
+    updateWrapWidth();
     if (wrap.classList.contains('fullscreen')) {
       // 全螢幕：清除非全螢幕模式設定的固定高度，改由 CSS 撐滿視窗
       wrap.style.height = '';
@@ -142,7 +156,7 @@
       const availH = wrap.clientHeight - padding;
       zoom = Math.max(minZoom, Math.min(maxZoom, Math.min(availW / DIAGRAM_VIEWBOX.w, availH / DIAGRAM_VIEWBOX.h)));
     } else {
-      zoom = Math.max(minZoom, Math.min(1, (wrap.clientWidth - padding) / DIAGRAM_VIEWBOX.w));
+      zoom = Math.max(minZoom, Math.min(maxZoom, (wrap.clientWidth - padding) / DIAGRAM_VIEWBOX.w));
       // 維持原本「依寬度自動縮放」的外框高度，放大/縮小時只在這個框內平移，不改變外框大小
       wrap.style.height = Math.round(DIAGRAM_VIEWBOX.h * zoom + 32) + 'px';
     }
