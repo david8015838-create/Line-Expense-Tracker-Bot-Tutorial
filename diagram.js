@@ -105,6 +105,7 @@
     <div class="diagram-zoom-level">100%</div>
     <button class="diagram-zoom-btn diagram-zoom-out" title="縮小">－</button>
     <button class="diagram-zoom-btn diagram-zoom-reset" title="重置視角">⤢</button>
+    <button class="diagram-zoom-btn diagram-zoom-fullscreen" title="全螢幕檢視">⛶</button>
   `;
   wrap.appendChild(zoomControls);
   const zoomLevelEl = zoomControls.querySelector('.diagram-zoom-level');
@@ -133,11 +134,20 @@
 
   function fitToScreen() {
     const padding = 24;
-    zoom = Math.max(minZoom, Math.min(1, (wrap.clientWidth - padding) / DIAGRAM_VIEWBOX.w));
+    if (wrap.classList.contains('fullscreen')) {
+      // 全螢幕：清除非全螢幕模式設定的固定高度，改由 CSS 撐滿視窗
+      wrap.style.height = '';
+      // 寬高都由 CSS 撐滿視窗，依寬高比例取較小值縮放，盡量塞滿畫面
+      const availW = wrap.clientWidth - padding;
+      const availH = wrap.clientHeight - padding;
+      zoom = Math.max(minZoom, Math.min(maxZoom, Math.min(availW / DIAGRAM_VIEWBOX.w, availH / DIAGRAM_VIEWBOX.h)));
+    } else {
+      zoom = Math.max(minZoom, Math.min(1, (wrap.clientWidth - padding) / DIAGRAM_VIEWBOX.w));
+      // 維持原本「依寬度自動縮放」的外框高度，放大/縮小時只在這個框內平移，不改變外框大小
+      wrap.style.height = Math.round(DIAGRAM_VIEWBOX.h * zoom + 32) + 'px';
+    }
     panX = padding / 2;
     panY = 16;
-    // 維持原本「依寬度自動縮放」的外框高度，放大/縮小時只在這個框內平移，不改變外框大小
-    wrap.style.height = Math.round(DIAGRAM_VIEWBOX.h * zoom + 32) + 'px';
     applyTransform();
   }
   fitToScreen();
@@ -145,6 +155,37 @@
   let userInteracted = false;
   window.addEventListener('resize', () => {
     if (!userInteracted) fitToScreen();
+  });
+
+  // ── 全螢幕檢視 ──
+  const fullscreenBtn = zoomControls.querySelector('.diagram-zoom-fullscreen');
+  let fullscreenBackdrop = null;
+
+  function setFullscreen(on) {
+    wrap.classList.toggle('fullscreen', on);
+    document.body.classList.toggle('diagram-fullscreen-active', on);
+    fullscreenBtn.textContent = on ? '✕' : '⛶';
+    fullscreenBtn.title = on ? '退出全螢幕' : '全螢幕檢視';
+
+    if (on) {
+      fullscreenBackdrop = document.createElement('div');
+      fullscreenBackdrop.className = 'diagram-fullscreen-backdrop';
+      fullscreenBackdrop.addEventListener('click', () => setFullscreen(false));
+      document.body.appendChild(fullscreenBackdrop);
+    } else if (fullscreenBackdrop) {
+      fullscreenBackdrop.remove();
+      fullscreenBackdrop = null;
+    }
+
+    userInteracted = false;
+    // 等版面切換完成後再重新計算尺寸
+    requestAnimationFrame(fitToScreen);
+  }
+
+  fullscreenBtn.addEventListener('click', () => setFullscreen(!wrap.classList.contains('fullscreen')));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && wrap.classList.contains('fullscreen')) setFullscreen(false);
   });
 
   // 滑鼠滾輪縮放（以游標位置為中心）
