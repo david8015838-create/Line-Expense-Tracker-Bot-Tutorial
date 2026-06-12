@@ -150,10 +150,12 @@ function highlightVaultField(field) {
   }, 300);
 }
 
-const vaultReminderBtn = document.querySelector('.vault-reminder-btn');
-if (vaultReminderBtn) {
-  vaultReminderBtn.addEventListener('click', openVault);
-}
+document.querySelectorAll('.vault-reminder-btn, .vault-save-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    openVault();
+    if (btn.dataset.vaultHighlight) highlightVaultField(btn.dataset.vaultHighlight);
+  });
+});
 
 vaultBtn.addEventListener('click', openVault);
 vaultOverlay.addEventListener('click', closeVault);

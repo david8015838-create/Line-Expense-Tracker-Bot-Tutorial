@@ -235,18 +235,6 @@
         幫助你掌握目前進度（勾選狀態會自動儲存在瀏覽器）。
       </p>
 
-      <div class="callout tip">
-        <div class="callout-title">🚀 開始之前：你需要一個「打開的」n8n</div>
-        <p>下面所有步驟都要在 n8n 介面裡操作，先確保你有一個能打開的 n8n：</p>
-        <ul class="clean">
-          <li><strong>最簡單：n8n Cloud（免費試用）</strong> —— 前往 <a class="inline-link" href="https://app.n8n.io/register" target="_blank" rel="noopener">app.n8n.io/register</a> 註冊帳號，不用安裝任何東西，註冊完直接就能用。</li>
-          <li><strong>進階：自己架設（完全免費）</strong> —— 參考 <a class="inline-link" href="https://docs.n8n.io/hosting/installation/docker/" target="_blank" rel="noopener">n8n 官方 Docker 安裝文件</a>，一行指令架在自己的電腦或伺服器上。</li>
-        </ul>
-        <p class="muted">
-          第一次打開 n8n，會先看到「建立擁有者帳號 Owner Account」畫面，填入姓名、Email、密碼即可——這就是你之後登入 n8n 的帳號，記得也存進「我的資料」保險箱。
-        </p>
-      </div>
-
       <div class="prereq-checklist">
         <div class="prereq-check-card" data-check="sheets">
           <div class="pcc-box"></div>
@@ -335,6 +323,7 @@
         <div class="callout token">
           <div class="callout-title">🔑 此階段應該已拿到</div>
           <p>✅ 試算表 ID（從網址列複製）—— 後面寫入 Sheet 的 HTTP Request 節點會用到。</p>
+          <button class="vault-save-btn" data-vault-highlight="spreadsheetId">📝 拿到了？存進「我的資料」②</button>
         </div>
       </div>
 
@@ -438,6 +427,7 @@
               </div>
               <pre>https://【你的n8n網址】/rest/oauth2-credential/callback</pre>
             </div>
+            <button class="vault-save-btn" data-vault-highlight="n8nUrl">📝 把 n8n 網址存進「我的資料」③</button>
           </div>
           <div class="prereq-step-shot">
             <div class="shot-grid">
@@ -552,6 +542,7 @@
         <div class="callout token">
           <div class="callout-title">🔑 此階段應該已拿到</div>
           <p>✅ Gemini API Key（已在 n8n 建立憑證）—— 用在 AI Agent 的 Chat Model，以及圖片路徑的 Gemini Vision HTTP Request。</p>
+          <button class="vault-save-btn" data-vault-highlight="geminiKey">📝 拿到了？存進「我的資料」④</button>
         </div>
       </div>
 
@@ -686,6 +677,7 @@
         <div class="callout token">
           <div class="callout-title">🔑 此階段應該已拿到</div>
           <p>✅ Channel secret　✅ Channel Access Token（long-lived）—— 這兩個之後在 n8n 的 HTTP Request / Code 節點會用到，後面的「送出LINE」節點需要 Channel Access Token。</p>
+          <button class="vault-save-btn" data-vault-highlight="lineToken">📝 拿到 Channel Access Token？存進「我的資料」①</button>
         </div>
       </div>
 
@@ -699,6 +691,17 @@
       <p class="section-sub">這就是你打開 n8n workflow 時會看到的樣子（19 個節點）。點擊任一個節點，右側會滑出該節點的完整教學。</p>
 
       <div class="diagram-hint">👆 點擊節點查看教學・滾輪／雙指可縮放・拖曳可移動畫布</div>
+
+      <div class="callout tip">
+        <div class="callout-title">📌 n8n 基本操作：怎麼新增節點？怎麼改名？</div>
+        <ul class="clean">
+          <li><strong>新增節點</strong>：在 n8n 畫布空白處按一下「+」（或從某個節點右側的小「+」拉出來），搜尋節點名稱（例如 <code class="inline">Webhook</code>、<code class="inline">Code</code>）並點選即可加到畫布上。</li>
+          <li><strong>打開設定</strong>：雙擊節點，會從右側滑出該節點的設定面板。</li>
+          <li><strong>改節點名稱</strong>：在設定面板左上角的節點名稱文字上點一下，就能直接修改。</li>
+          <li><strong>連接節點</strong>：把滑鼠移到節點右側的圓點上，拖曳到下一個節點即可連線。</li>
+        </ul>
+        <p class="muted">下面每個節點教學都會標明「節點名稱」——有些節點（例如 Webhook、If）必須<strong>保留 n8n 預設名稱</strong>，有些則需要<strong>改成指定的中文名稱</strong>，因為後面的 Code 節點會用名稱去抓取它們的輸出，改錯名稱會導致報錯。</p>
+      </div>
 
       <div class="diagram-legend">
         <span class="legend-item"><span class="legend-dot" style="background:var(--purple)"></span>觸發 / Webhook</span>
@@ -848,6 +851,7 @@
       <h3>Webhook 節點設定</h3>
       <table class="settings">
         <tr><td>節點類型</td><td><code>Webhook</code></td></tr>
+        <tr><td>節點名稱</td><td><code>Webhook</code>（n8n 自動產生的預設名稱，<strong>請保留、不要改名</strong>——後面「處理記帳」「處理查詢」這兩個 Code 節點會用 <code>$('Webhook')</code> 來抓這裡的資料，改名會讓它們找不到節點而報錯）</td></tr>
         <tr><td>HTTP Method</td><td><code>POST</code></td></tr>
         <tr><td>Path</td><td><code>line-ledger</code></td></tr>
         <tr><td>Respond</td><td><code>Immediately</code></td></tr>
@@ -1369,12 +1373,21 @@ return [{ json: { output: cleaned } }];</pre>
       <p class="section-sub">兩條路徑（文字、圖片）合流後，依 AI 判斷的 intent 決定走「記帳」還是「查詢」。</p>
 
       <table class="settings">
-        <tr><td>Value 1</td><td><code>{{ (Array.isArray(JSON.parse($json.output)) ? JSON.parse($json.output)[0] : JSON.parse($json.output)).intent }}</code></td></tr>
+        <tr><td>節點名稱</td><td><code>If</code>（保留預設名稱，<strong>請勿更改</strong>——後面「處理記帳」「處理查詢」這兩個 Code 節點會用 <code>$('If')</code> 來抓 AI 判斷的結果，改名會讓它們找不到節點而報錯）</td></tr>
+        <tr><td>Value 1</td><td>右側表達式（點 📋 複製）</td></tr>
         <tr><td>Operation</td><td><code>is equal to</code></td></tr>
         <tr><td>Value 2</td><td><code>record</code></td></tr>
         <tr><td>True</td><td>記帳路徑（接 處理記帳）</td></tr>
         <tr><td>False</td><td>查詢路徑（接 讀取Sheet → 處理查詢）</td></tr>
       </table>
+
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">Value 1 完整表達式</span>
+          <button class="copy-btn" data-label="複製">複製</button>
+        </div>
+        <pre>{{ (Array.isArray(JSON.parse($json.output)) ? JSON.parse($json.output)[0] : JSON.parse($json.output)).intent }}</pre>
+      </div>
 
       <div class="shot">
         <div class="frame">
@@ -1435,6 +1448,12 @@ return [{ json: { output: cleaned } }];</pre>
     <!-- ══════════ handle-record ══════════ -->
     <section class="node-panel-content" data-node="handle-record" hidden>
       <p class="section-sub">把 AI 輸出的記帳 JSON，整理成「寫入 Sheet」與「回覆 LINE」需要的格式。</p>
+
+      <table class="settings">
+        <tr><td>節點類型</td><td><code>Code（JavaScript）</code></td></tr>
+        <tr><td>節點名稱</td><td><code>處理記帳</code>（新增節點後<strong>務必把名稱改成這個</strong>——後面「送出LINE」節點會用 <code>$('處理記帳')</code> 抓取這裡的輸出，名稱不一樣會找不到節點而報錯）</td></tr>
+        <tr><td>Mode</td><td><code>Run Once for All Items</code></td></tr>
+      </table>
 
       <div class="code-block">
         <div class="code-head">
@@ -1538,6 +1557,12 @@ return [{ json: {
     <!-- ══════════ handle-query ══════════ -->
     <section class="node-panel-content" data-node="handle-query" hidden>
       <p class="section-sub">依 AI 給的日期區間篩選紀錄，按分類統計加總，組成漂亮的分析報告文字。</p>
+
+      <table class="settings">
+        <tr><td>節點類型</td><td><code>Code（JavaScript）</code></td></tr>
+        <tr><td>節點名稱</td><td><code>處理查詢</code>（新增節點後<strong>務必把名稱改成這個</strong>——後面「送出LINE1」節點會用 <code>$('處理查詢')</code> 抓取這裡的輸出，名稱不一樣會找不到節點而報錯）</td></tr>
+        <tr><td>Mode</td><td><code>Run Once for All Items</code></td></tr>
+      </table>
 
       <div class="code-block">
         <div class="code-head">

@@ -370,6 +370,28 @@ a.inline-link:hover {
   color: #04261b;
 }
 
+.vault-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--accent-dim);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.vault-save-btn:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #04261b;
+}
+
 .callout.token {
   background: rgba(251, 191, 36, 0.08);
   border-color: rgba(251, 191, 36, 0.3);
