@@ -111,27 +111,6 @@ document.addEventListener('click', async (e) => {
   }, 1200);
 });
 
-// ── 範例發票：複製圖片到剪貼簿 ──
-document.addEventListener('click', (e) => {
-  const btn = e.target.closest('.copy-img-btn');
-  if (!btn) return;
-
-  // 注意：navigator.clipboard.write() 必須在點擊事件中「同步」呼叫，
-  // 否則 Safari／iOS 會因為使用者操作權杖過期而失敗。
-  // 所以這裡用 Promise<Blob> 包進 ClipboardItem，而不是先 await fetch 再呼叫。
-  if (!navigator.clipboard || typeof ClipboardItem === 'undefined') {
-    showToast('⚠️ 這個瀏覽器不支援複製圖片，請改用長按圖片儲存');
-    return;
-  }
-
-  const blobPromise = fetch(btn.dataset.img).then((res) => res.blob());
-
-  navigator.clipboard
-    .write([new ClipboardItem({ 'image/png': blobPromise })])
-    .then(() => showToast('✅ 已複製圖片，到 LINE 貼上就能傳送'))
-    .catch(() => showToast('⚠️ 這個瀏覽器不支援複製圖片，請改用長按圖片儲存'));
-});
-
 // ── 我的資料保險箱：彈窗開關與輸入儲存 ──
 const vaultBtn = document.querySelector('.vault-btn');
 const vaultOverlay = document.querySelector('.vault-overlay');
