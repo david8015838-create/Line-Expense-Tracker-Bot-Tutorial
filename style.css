@@ -1718,6 +1718,30 @@ body.diagram-fullscreen-active {
   background: var(--accent-soft);
 }
 
+/* ── 範例發票：下載圖片按鈕 ── */
+
+.copy-img-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-hi);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  vertical-align: middle;
+  margin-left: 8px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.copy-img-btn:hover {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+}
+
 @media (max-width: 700px) {
   .vault-btn {
     left: 16px;
