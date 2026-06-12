@@ -280,6 +280,14 @@ ol.clean li strong {
 
 a.inline-link {
   color: var(--blue);
+  text-decoration: underline;
+  text-decoration-color: rgba(96, 165, 250, 0.35);
+  text-underline-offset: 2px;
+  transition: text-decoration-color 0.15s;
+}
+
+a.inline-link:hover {
+  text-decoration-color: var(--blue);
 }
 
 /* ── Callouts ── */

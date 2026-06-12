@@ -235,6 +235,18 @@
         幫助你掌握目前進度（勾選狀態會自動儲存在瀏覽器）。
       </p>
 
+      <div class="callout tip">
+        <div class="callout-title">🚀 開始之前：你需要一個「打開的」n8n</div>
+        <p>下面所有步驟都要在 n8n 介面裡操作，先確保你有一個能打開的 n8n：</p>
+        <ul class="clean">
+          <li><strong>最簡單：n8n Cloud（免費試用）</strong> —— 前往 <a class="inline-link" href="https://app.n8n.io/register" target="_blank" rel="noopener">app.n8n.io/register</a> 註冊帳號，不用安裝任何東西，註冊完直接就能用。</li>
+          <li><strong>進階：自己架設（完全免費）</strong> —— 參考 <a class="inline-link" href="https://docs.n8n.io/hosting/installation/docker/" target="_blank" rel="noopener">n8n 官方 Docker 安裝文件</a>，一行指令架在自己的電腦或伺服器上。</li>
+        </ul>
+        <p class="muted">
+          第一次打開 n8n，會先看到「建立擁有者帳號 Owner Account」畫面，填入姓名、Email、密碼即可——這就是你之後登入 n8n 的帳號，記得也存進「我的資料」保險箱。
+        </p>
+      </div>
+
       <div class="prereq-checklist">
         <div class="prereq-check-card" data-check="sheets">
           <div class="pcc-box"></div>
@@ -282,7 +294,7 @@
           <div class="prereq-step-text">
             <div class="step">
               <div class="step-num">1</div>
-              <div class="step-body"><strong>新增一份 Google 試算表</strong><p>命名為 <code class="inline">LINE記帳</code>（名稱可自訂，但後面範例都用這個）。</p></div>
+              <div class="step-body"><strong>新增一份 Google 試算表</strong><p>前往 <a class="inline-link" href="https://sheets.new" target="_blank" rel="noopener">sheets.new</a> 建立一份新試算表，命名為 <code class="inline">LINE記帳</code>（名稱可自訂，但後面範例都用這個）。</p></div>
             </div>
           </div>
         </div>
@@ -333,7 +345,11 @@
 
         <div class="callout tip">
           <div class="callout-title">📌 建議專案名稱</div>
-          <p>建立一個新的 Google Cloud 專案，命名為 <code>LINE expense tracker bot</code>，方便辨識，與其他專案分開管理。</p>
+          <p>
+            前往 <a class="inline-link" href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Google Cloud Console - 新增專案</a>，
+            建立一個新的 Google Cloud 專案，命名為 <code>LINE expense tracker bot</code>，方便辨識，與其他專案分開管理。
+            建立完成後，記得在畫面最上方的專案下拉選單切換到這個新專案，後面所有設定才會套用在這個專案裡。
+          </p>
         </div>
 
         <div class="prereq-step">
@@ -342,7 +358,7 @@
               <div class="step-num">1</div>
               <div class="step-body">
                 <strong>進入 APIs &amp; Services</strong>
-                <p>Google Cloud Console 主畫面 → Quick access → 點 <strong>APIs &amp; Services</strong>。</p>
+                <p>前往 <a class="inline-link" href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a> 主畫面 → Quick access → 點 <strong>APIs &amp; Services</strong>。</p>
               </div>
             </div>
           </div>
@@ -489,7 +505,7 @@
           <div class="prereq-step-text">
             <div class="step">
               <div class="step-num">1</div>
-              <div class="step-body"><strong>前往 Google AI Studio</strong><p>網址：<code class="inline">https://aistudio.google.com/apikey</code></p></div>
+              <div class="step-body"><strong>前往 Google AI Studio</strong><p>網址：<a class="inline-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">https://aistudio.google.com/apikey</a></p></div>
             </div>
           </div>
         </div>
@@ -571,7 +587,7 @@
         <div class="prereq-step">
           <div class="prereq-step-text">
             <h4 style="margin:0 0 6px;">0-4a：建立 Provider</h4>
-            <p class="muted">前往 <code class="inline">https://developers.line.biz</code> → 登入 → 左側 Providers → Create a new provider，名稱填 <code class="inline">記帳bot</code>（不能用 LINE）→ Create。</p>
+            <p class="muted">前往 <a class="inline-link" href="https://developers.line.biz" target="_blank" rel="noopener">LINE Developers Console</a> → 登入 → 左側 Providers → Create a new provider，名稱填 <code class="inline">記帳bot</code>（不能用 LINE）→ Create。</p>
           </div>
           <div class="prereq-step-shot">
             <div class="shot">
@@ -619,7 +635,7 @@
         <div class="prereq-step">
           <div class="prereq-step-text">
             <h4 style="margin:0 0 6px;">0-4d：啟用 Messaging API</h4>
-            <p class="muted">官方帳號建立完成後，進入 <strong>LINE Official Account Manager</strong> → 右上角「設定」→ 左側「Messaging API」→ 點「啟用Messaging API」→ 選擇 Provider「記帳bot」→ 確認。</p>
+            <p class="muted">官方帳號建立完成後，進入 <a class="inline-link" href="https://manager.line.biz" target="_blank" rel="noopener">LINE Official Account Manager</a> → 右上角「設定」→ 左側「Messaging API」→ 點「啟用Messaging API」→ 選擇 Provider「記帳bot」→ 確認。</p>
           </div>
           <div class="prereq-step-shot">
             <div class="shot-grid">
@@ -644,7 +660,7 @@
         <div class="prereq-step">
           <div class="prereq-step-text">
             <h4 style="margin:0 0 6px;">0-4e：取得 Channel Access Token，並關閉自動回覆</h4>
-            <p class="muted">進到 LINE Developers Console → 你的 Channel → Messaging API 頁籤：</p>
+            <p class="muted">進到 <a class="inline-link" href="https://developers.line.biz" target="_blank" rel="noopener">LINE Developers Console</a> → 你的 Channel → Messaging API 頁籤：</p>
             <ul class="clean">
               <li><strong>Channel access token</strong> → 點 Issue → 複製 Token 並安全保存</li>
               <li><strong>Auto-reply messages</strong> → 點 Edit → 到官方帳號後台<strong>關閉</strong></li>
@@ -1722,7 +1738,7 @@ return [{ json: { sent: true } }];</pre>
       <div class="callout token">
         <div class="callout-title">🔑 【LINE Channel Access Token】去哪裡拿？</div>
         <p>
-          LINE Developers Console → 你的 Channel → <strong>Messaging API</strong> 分頁 → 最下方 <strong>Channel access token</strong> → 點 Issue（或複製已有的）。
+          <a class="inline-link" href="https://developers.line.biz" target="_blank" rel="noopener">LINE Developers Console</a> → 你的 Channel → <strong>Messaging API</strong> 分頁 → 最下方 <strong>Channel access token</strong> → 點 Issue（或複製已有的）。
           <br />⚠️ 這個 Token 跟 Gemini API Key 完全不同，也跟 Google OAuth 無關，更不是 LINE Login Channel 的 Channel Secret。
         </p>
       </div>
@@ -1772,7 +1788,7 @@ return [{ json: { sent: true } }];</pre>
       <div class="callout token">
         <div class="callout-title">🔑 【LINE Channel Access Token】去哪裡拿？</div>
         <p>
-          LINE Developers Console → 你的 Channel → <strong>Messaging API</strong> 分頁 → 最下方 <strong>Channel access token</strong> → 點 Issue（或複製已有的）。
+          <a class="inline-link" href="https://developers.line.biz" target="_blank" rel="noopener">LINE Developers Console</a> → 你的 Channel → <strong>Messaging API</strong> 分頁 → 最下方 <strong>Channel access token</strong> → 點 Issue（或複製已有的）。
           <br />⚠️ 這個 Token 跟 Gemini API Key 完全不同，也跟 Google OAuth 無關，更不是 LINE Login Channel 的 Channel Secret。
         </p>
       </div>
